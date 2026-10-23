@@ -1,0 +1,10 @@
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\mod\1.6\Assemblies\VerbalCommands.dll
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCommands.csproj.AssemblyReference.cache
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCommands.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCommands.AssemblyInfoInputs.cache
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCommands.AssemblyInfo.cs
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCommands.csproj.CoreCompileInputs.cache
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCo.45367B74.Up2Date
+C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\obj\Debug\VerbalCommands.dll
+C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\7712475a-d9b5-4afc-8d74-a7469a7931fe\scratchpad\vc_build\VerbalCommands.dll
+C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\b2e04e29-4064-4d0a-a3b6-26577c2f0820\scratchpad\vc_build\VerbalCommands.dll

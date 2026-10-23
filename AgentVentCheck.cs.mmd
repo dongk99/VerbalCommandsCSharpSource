@@ -1,0 +1,18 @@
+flowchart TB
+  in["NEW: AgentVentCheck.Note(plan, map, placed)<br/>overloads: (def, cell, rot) / (def, cells, rot) / List of Placed"]
+  in --> kind{"NEW: each placed thing"}
+  kind -- "Building_Heater" --> heat["NEW: room = its own cell's room<br/>(Building_Heater.cs:22)"]
+  kind -- "Building_Cooler" --> cool["NEW: room = cold side cell + South.RotatedBy(rot)<br/>(Building_Cooler.cs:18, 40)"]
+  kind -- other --> skip[NEW: skip]
+  heat --> ok{"NEW: proper room, not outdoors,<br/>not already done in this plan?"}
+  cool --> ok
+  ok -- no --> skip
+  ok -- yes --> scan["NEW: Options(map, room): each room cell + cardinal: wall w, other side o<br/>w: placeOverable or smoothed wall; cell and o passable<br/>o: visible, other proper room, not outdoors<br/>one per other room; rooms already joined by a vent left out"]
+  scan --> math["NEW: settle = (cellsA x tempA + cellsB x tempB) / (cellsA + cellsB)<br/>(GenTemperature.cs:368-457)"]
+  math --> band["NEW: keep only options that settle within 10C..30C<br/>(user, 2026-10-21: between 10~30)"]
+  band --> any{"NEW: any option?"}
+  any -- no --> none[NEW: no note]
+  any -- yes --> note["NEW: plan note:<br/>Vent instead: ROOM 22C, ROOM 18C."]
+  err["NEW: any exception: Log.Warning, plan goes on"]
+  class in,kind,heat,cool,skip,ok,scan,math,band,any,none,note,err new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

@@ -1,0 +1,15 @@
+flowchart TD
+  callers["callers: work priority (FormPlanner.PlanWorkPriority), prioritize (AgentPawnActionsWork.PlanPrioritize),<br/>micro mine (AgentMicro), bills (FormBills)<br/>not: build roof at AREA using PAWN (user's exclusion)"]
+  callers --> w["Check(pawn, WorkTypeDef)"]
+  callers --> s["Check(pawn, SkillDef) - a bill's workSkill"]
+  w --> wnull{"pawn/skills/work null,<br/>or work has no relevant skill (hauling, cleaning)?"}
+  wnull -- yes --> ok[null: not blocked]
+  wnull -- no --> wavg{"AverageOfRelevantSkillsFor(work) <= RedMax (2)?"}
+  wavg -- no --> ok
+  wavg -- yes --> line
+  s --> snull{"pawn/skills/skill null?"}
+  snull -- yes --> ok
+  snull -- no --> slev{"skill not TotallyDisabled and Level <= 2?"}
+  slev -- no --> ok
+  slev -- yes --> line["Line(pawn): 'NAME: they are good at<br/>[2-passion list] (2 passion), [1-passion list] (1 passion),<br/>BEST N (highest skill), Assign them to do those instead?'<br/>empty lists left out"]
+  line --> blocked[order refused with that line]

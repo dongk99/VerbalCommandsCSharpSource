@@ -1,0 +1,200 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>VerbalCommands</AssemblyName>
+    <RootNamespace>VerbalCommands</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\..\mod\1.6\Assemblies\</OutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <!-- Brief 13 Phase A1: Concentus 2.2.2 + Concentus.Oggfile 1.0.7 (both verified on nuget.org via
+         WebFetch of api.nuget.org/v3-flatcontainer/.../*.nuspec on 2026-09-26 - Concentus 2.2.2 exists
+         and its net452 dependency group lists System.Memory>=4.5.4, System.Numerics.Vectors>=4.5.0;
+         Concentus.Oggfile 1.0.7 is nuget.org's latest 1.0.x release and its net452 group depends on
+         Concentus 2.2.2 exactly). `dotnet restore` of a scratch net472 csproj referencing both shows
+         the net472 target actually resolves lib/net452/Concentus.dll, lib/net452/Concentus.Oggfile.dll,
+         plus transitive System.Buffers 4.5.1, System.Memory 4.5.4, System.Numerics.Vectors 4.5.0,
+         System.Runtime.CompilerServices.Unsafe 4.5.3 - none of which RimWorldWin64_Data\Managed ships
+         (checked by directory listing: only System.Numerics.dll, a different assembly, is present), so
+         all six DLLs must be shipped in mod\1.6\Assemblies\ (see RenameNewtonsoftAndPruneExtras below).
+         Same PackageReference (not vendored-by-HintPath like sherpa-onnx) as Newtonsoft.Json: unlike
+         org.k2fsa.sherpa.onnx.runtime.win-x64, Concentus has no separate native-runtime sibling package
+         to accidentally pull in, so a plain restore is safe here. -->
+    <PackageReference Include="Concentus" Version="2.2.2" />
+    <PackageReference Include="Concentus.Oggfile" Version="1.0.7" />
+    <!-- Brief 13 Phase B1: NWaves 0.9.6 (NuGet, MIT; nuspec read in full by Claude 2026-09-26: targets
+         net5.0 and .NETStandard2.0 only, no <dependencies> group at all, so a plain restore pulls no
+         transitive DLLs the way Concentus did). Used for RealFft.PowerSpectrum, Features.Spectral.Flatness
+         and Operations.Resampler/Operation.Resample (see SttEngine.cs / VoiceDebugRecorder.cs header
+         comments for the exact ilspycmd-verified members). RimWorld's own Managed\netstandard.dll facade
+         (90,112 bytes) exists, but netstandard2.0-only loading under RimWorld's Mono is not yet proven in
+         this project (unlike net45/net452, which brief 11/13A already proved work), so this ships as
+         zz7_NWaves.dll (sorts after VerbalCommands.dll/sherpa-onnx.dll, same ModAssemblyHandler
+         load-order reasoning as zz1-zz6 above) and every call site wraps NWaves use so a load/type-init
+         failure logs once, disables voice-debug measurements, and never touches voice input. -->
+    <PackageReference Include="NWaves" Version="0.9.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Brief 23: the router language interpreter (net472 class library, no packages). RouterScript.dll lands
+         next to VerbalCommands.dll; it sorts before it ("R" < "V"), so the game loads it first, and the
+         prune target below keeps it. The RouterScript project itself is not changed. -->
+    <ProjectReference Include="..\RouterScript\RouterScript.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <RimWorldDir Condition="'$(RimWorldDir)' == '' And Exists('E:\STEAM\steamapps\common\RimWorld')">E:\STEAM\steamapps\common\RimWorld</RimWorldDir>
+    <RimWorldDir Condition="'$(RimWorldDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\RimWorld</RimWorldDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Brief 11: UnityEngine.Microphone/AudioClip (verified present via ilspycmd -t UnityEngine.Microphone
+         and -t UnityEngine.AudioClip against this assembly - see SttEngine.cs header comment). -->
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Picture question (AgentPicture.cs, 2026-10-14): ScreenCapture.CaptureScreenshotAsTexture and
+         ImageConversion.EncodeToPNG; both DLLs are in RimWorldWin64_Data\Managed (directory listing 2026-10-14). -->
+    <Reference Include="UnityEngine.ScreenCaptureModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.ScreenCaptureModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>$(RimWorldDir)\RimWorldWin64_Data\Managed\System.Net.Http.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- 2026-10-15 (user: construction-fail message for every build over 1 work, ConstructionFailPatch.cs): Harmony from
+         the Harmony mod (Steam Workshop 2009463077, packageId brrainz.harmony, a dependency in About.xml). Compile only:
+         Private=false, so it is not copied; the game loads the Harmony mod's own 0Harmony.dll. -->
+    <Reference Include="0Harmony">
+      <HintPath>$(RimWorldDir)\..\..\workshop\content\294100\2009463077\1.6\Assemblies\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Brief 11: managed sherpa-onnx wrapper, org.k2fsa.sherpa.onnx 1.13.8, lib/net45 asset (see
+         SttEngine.cs header comment for why net45 was picked over the same package's netstandard2.0
+         build). Vendored locally rather than referenced via PackageReference so the NuGet restore
+         never pulls the sibling org.k2fsa.sherpa.onnx.runtime.win-x64 package's native
+         runtimes/win-x64/native/*.dll into this project's build output automatically - those must
+         land in mod\1.6\Native\, never mod\1.6\Assemblies\ (see NativeLibraryLoader.cs). Private=true
+         (default) so it copies into OutputPath (mod\1.6\Assemblies\) like VerbalCommands.dll itself;
+         the RenameNewtonsoftAndPruneExtras target below keeps it explicitly so it isn't pruned as an
+         "extra" DLL. -->
+    <Reference Include="sherpa-onnx">
+      <HintPath>ThirdParty\sherpa-onnx\sherpa-onnx.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    The game loads Assemblies/*.dll in file order (sources\RimWorldDecompiled\Verse\ModAssemblyHandler.cs:31),
+    where that order comes from Verse.ModContentPack.GetAllFilesForModPreserveOrder sorting
+    Assemblies\*.dll with `a.Name.CompareTo(b.Name)` (culture-aware string compare), and
+    ModAssemblyHandler.ReloadAll calls Assembly.LoadFrom per file then AssemblyIsUsable (GetTypes), and
+    on ANY exception logs and `break`s - nothing after the failing file in this mod loads (verified by
+    decompiling both members with ilspycmd; brief 13 Phase A review, 2026-09-26). So:
+      - Newtonsoft.Json must load before VerbalCommands.dll, so it is renamed 000_Newtonsoft.Json.dll,
+        same trick as RimAI Framework (sources\Rimworld_AI_Framework\RimAI.Framework\RimAI.Framework.csproj:84-87).
+      - Brief 13 Phase A1's six new DLLs (Concentus, Concentus.Oggfile, and four transitive BCL
+        dependency DLLs) must NOT be able to stop VerbalCommands.dll or sherpa-onnx.dll from loading if
+        one of them throws - so they are renamed zz1_..zz6_ to sort (culture-aware, confirmed with
+        PowerShell `[Array]::Sort`) after both VerbalCommands.dll and sherpa-onnx.dll. Among themselves
+        they are numbered in dependency order - dependencies first - so each file's own GetTypes() can
+        resolve the types it references against an already-loaded dependency, per the actual reference
+        graph read with ilspycmd's dump-table AssemblyRef option against the built DLLs: Unsafe, Buffers and
+        Numerics.Vectors have no dependencies among these six; Memory references Unsafe, Buffers and
+        Numerics.Vectors; Concentus references Memory and Numerics.Vectors; Concentus.Oggfile references
+        Memory and Concentus:
+          zz1_System.Runtime.CompilerServices.Unsafe.dll
+          zz2_System.Buffers.dll
+          zz3_System.Numerics.Vectors.dll
+          zz4_System.Memory.dll
+          zz5_Concentus.dll
+          zz6_Concentus.Oggfile.dll
+    Brief 13 Phase B1's NWaves.dll has no <dependencies> group at all (see PackageReference comment
+    above), so it only needs to sort after VerbalCommands.dll/sherpa-onnx.dll and not after anything
+    else among zz1-zz6:
+          zz7_NWaves.dll
+    Any other dependency DLL NuGet copied in that isn't one of the names above is deleted so only the
+    files above ship.
+  -->
+  <Target Name="RenameNewtonsoftAndPruneExtras" AfterTargets="Build">
+    <ItemGroup>
+      <NewtonsoftDll Include="$(OutputPath)Newtonsoft.Json.dll" Condition="Exists('$(OutputPath)Newtonsoft.Json.dll')" />
+      <UnsafeDll Include="$(OutputPath)System.Runtime.CompilerServices.Unsafe.dll" Condition="Exists('$(OutputPath)System.Runtime.CompilerServices.Unsafe.dll')" />
+      <BuffersDll Include="$(OutputPath)System.Buffers.dll" Condition="Exists('$(OutputPath)System.Buffers.dll')" />
+      <VectorsDll Include="$(OutputPath)System.Numerics.Vectors.dll" Condition="Exists('$(OutputPath)System.Numerics.Vectors.dll')" />
+      <MemoryDll Include="$(OutputPath)System.Memory.dll" Condition="Exists('$(OutputPath)System.Memory.dll')" />
+      <ConcentusDll Include="$(OutputPath)Concentus.dll" Condition="Exists('$(OutputPath)Concentus.dll')" />
+      <ConcentusOggfileDll Include="$(OutputPath)Concentus.Oggfile.dll" Condition="Exists('$(OutputPath)Concentus.Oggfile.dll')" />
+      <NWavesDll Include="$(OutputPath)NWaves.dll" Condition="Exists('$(OutputPath)NWaves.dll')" />
+      <AllOutputDlls Include="$(OutputPath)*.dll" />
+      <KeepDlls Include="$(OutputPath)VerbalCommands.dll" />
+      <KeepDlls Include="$(OutputPath)000_Newtonsoft.Json.dll" />
+      <!-- Brief 23: the router language interpreter ships next to VerbalCommands.dll. -->
+      <KeepDlls Include="$(OutputPath)RouterScript.dll" />
+      <!-- Brief 11: the managed sherpa-onnx wrapper must ship too, not be pruned as an "extra" DLL. -->
+      <KeepDlls Include="$(OutputPath)sherpa-onnx.dll" />
+      <!-- Brief 13 Phase A1: Concentus + Concentus.Oggfile and their four transitive BCL dependency
+           DLLs (none shipped by RimWorldWin64_Data\Managed - see PackageReference comment above),
+           renamed zz1_..zz6_ in dependency order so they load after VerbalCommands.dll/sherpa-onnx.dll
+           (see target comment above) and must survive the prune under their new names. -->
+      <KeepDlls Include="$(OutputPath)zz1_System.Runtime.CompilerServices.Unsafe.dll" />
+      <KeepDlls Include="$(OutputPath)zz2_System.Buffers.dll" />
+      <KeepDlls Include="$(OutputPath)zz3_System.Numerics.Vectors.dll" />
+      <KeepDlls Include="$(OutputPath)zz4_System.Memory.dll" />
+      <KeepDlls Include="$(OutputPath)zz5_Concentus.dll" />
+      <KeepDlls Include="$(OutputPath)zz6_Concentus.Oggfile.dll" />
+      <!-- Brief 13 Phase B1: NWaves has no <dependencies> group (see PackageReference comment above),
+           so it only needs to sort after VerbalCommands.dll/sherpa-onnx.dll like zz1-zz6, and must
+           survive the prune under its new name. -->
+      <KeepDlls Include="$(OutputPath)zz7_NWaves.dll" />
+      <ExtraDlls Include="@(AllOutputDlls)" Exclude="@(KeepDlls);@(NewtonsoftDll);@(UnsafeDll);@(BuffersDll);@(VectorsDll);@(MemoryDll);@(ConcentusDll);@(ConcentusOggfileDll);@(NWavesDll)" />
+    </ItemGroup>
+    <Move SourceFiles="@(NewtonsoftDll)" DestinationFiles="$(OutputPath)000_Newtonsoft.Json.dll" Condition="'@(NewtonsoftDll)' != ''" />
+    <Move SourceFiles="@(UnsafeDll)" DestinationFiles="$(OutputPath)zz1_System.Runtime.CompilerServices.Unsafe.dll" Condition="'@(UnsafeDll)' != ''" />
+    <Move SourceFiles="@(BuffersDll)" DestinationFiles="$(OutputPath)zz2_System.Buffers.dll" Condition="'@(BuffersDll)' != ''" />
+    <Move SourceFiles="@(VectorsDll)" DestinationFiles="$(OutputPath)zz3_System.Numerics.Vectors.dll" Condition="'@(VectorsDll)' != ''" />
+    <Move SourceFiles="@(MemoryDll)" DestinationFiles="$(OutputPath)zz4_System.Memory.dll" Condition="'@(MemoryDll)' != ''" />
+    <Move SourceFiles="@(ConcentusDll)" DestinationFiles="$(OutputPath)zz5_Concentus.dll" Condition="'@(ConcentusDll)' != ''" />
+    <Move SourceFiles="@(ConcentusOggfileDll)" DestinationFiles="$(OutputPath)zz6_Concentus.Oggfile.dll" Condition="'@(ConcentusOggfileDll)' != ''" />
+    <Move SourceFiles="@(NWavesDll)" DestinationFiles="$(OutputPath)zz7_NWaves.dll" Condition="'@(NWavesDll)' != ''" />
+    <Delete Files="@(ExtraDlls)" Condition="'@(ExtraDlls)' != ''" />
+  </Target>
+
+</Project>

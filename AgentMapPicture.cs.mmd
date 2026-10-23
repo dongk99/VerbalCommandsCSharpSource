@@ -1,0 +1,12 @@
+flowchart TB
+  make["Make(map): 'list mountains on map'"] --> scale["scale = 1..4 px per cell, longer side at most 1024 px"]
+  scale --> cells["each cell: CellColour (fog black, rock / ore, impassable building, stockpile, walkable building, water, floor / ice / soil / barren, snow lerp)"]
+  cells --> marks["marks: colonists P, hostiles H, own animals A, steam geysers G, ship chunks C; wild animals = untagged navy dots"]
+  marks --> groups{"marks within 2 cells of each other?"}
+  groups -- no --> tag["PlaceTag: first free spot around the mark, DrawText"]
+  groups -- yes --> group["white box around group, tag K1.., text lists members"]
+  tag --> zones["stockpile zones: tag S + zone ID on middle cell"]
+  group --> zones
+  zones --> png["write outbox\map.png (PicturePath)"]
+  png --> pause["AgentTime.RequestPause: 'read the map.png ... unpause when done', game paused"]
+  pause --> text["answer text: path, colour legend, tags with cells, groups, stockpiles (lines of 100 chars)"]

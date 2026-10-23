@@ -1,0 +1,16 @@
+flowchart TD
+    P["Plan (:17): toolName, writes (description + apply), notes, askConfirm, confirmBy"]
+    R["Resolve(toolUse, snap, sliceStorageIds) (:49): main thread, re-checks LIVE state, not the snapshot the model saw"] --> S{"tool name (:54)"}
+    T["ResolveTargets (:91): all / no_rest_need / ids from snap.pawnsById; a gone or off-map pawn -> Fault (:119-126)"]
+    S -->|set_schedule| A["ResolveSetSchedule (:144): exactly 24 slots, TimeAssignmentDef by defName (:212), Meditate needs Royalty (:164); write: timetable.SetAssignment per hour (:190-196)"]
+    S -->|create_allowed_area| B["ResolveCreateAllowedArea (:226): room roles -> live rooms (:248-273); at most 10 areas (:275-284); write: TryMakeNewAllowed, cells of the rooms (+ own bedroom), AreaRestrictionInPawnCurrentMap (:300-320, :348-372)"]
+    S -->|set_work_priorities| C["ResolveSetWorkPriorities (:399): WorkTypeDef by defName, 0-4; manual priorities off allows only 0 / 3 (:417-437); incapable pawns skipped with a note (:449-453); write: workSettings.SetPriority (:460-463)"]
+    S -->|define_group| D["ResolveDefineGroup (:485): slot 1-9, name up to 30, weapon class / range / weapon defNames, include / exclude ids -> GroupRule; write: GameComponent.SetGroup (:588-597)"]
+    S -->|clear_group| E["ResolveClearGroup (:627); write: gc.ClearGroup (:648-656)"]
+    S -->|set_storage| F["ResolveSetStorage (:759): mode modify / replace, priority, allow / disallow categories, items, specials, hit_points, quality (:769-856); every id must be in this order's slice (:881-885) and still exist (:886-892); per-unit refusals RefusalsFor (:981); write: re-resolve at apply time, ApplyStorageChange (:936-950, :1137-1202)"]
+    S -->|place_blueprint / draw_plan / build_option| G["BuildTools.ResolvePlaceBlueprint / ResolveDrawPlan / ResolveBuildOption (:69-74)"]
+    S -->|anything else| X["Fault: not understood, nothing changed (:77)"]
+    T --> A
+    T --> B
+    T --> C
+    AP["Apply(plan) (:81): runs every Write.apply in order"]

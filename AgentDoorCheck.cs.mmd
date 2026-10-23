@@ -1,0 +1,15 @@
+flowchart TB
+  subgraph ns["NoteShell(plan, map, shell) ~56-74"]
+    a{"shell.placeDoor and door valid?"} -- no --> ret["return (no door check;<br/>a fogged dig-room door lands here)"]
+    a -- yes --> b["placed: wall blueprints + the door"]
+    b --> c["open = shell.mineCells (+ door if in rock)"]
+    c --> c2["open also gets shell.fogMineCells:<br/>fogged cells this dig room marks count as dug,<br/>not as whatever is under the fog"]
+    c2 --> d["Note(plan, map, placed, open)"]
+  end
+  subgraph nt["Note(...) ~76-: unchanged"]
+    d --> e["Sim: walls, doors, open cells"]
+    e --> f["flood fill from each side of each door"]
+    f --> g["enclosure across from an existing room?<br/>note + askConfirm"]
+  end
+  class c2 new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

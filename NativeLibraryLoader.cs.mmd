@@ -1,0 +1,8 @@
+flowchart TD
+    E["EnsureLoaded(nativeDir) (:46); once per process, later calls return the first result (:48-53)"] --> F{"onnxruntime.dll, then sherpa-onnx-c-api.dll present in nativeDir? (:55-59)"}
+    F -->|missing| M["Log.Error 'missing name at path'; return false (:61-65)"]
+    F -->|present| L["kernel32!LoadLibraryW(full path) (:36-37, :68)"]
+    L -->|zero handle| W["Log.Error with Win32 error; return false (:69-76)"]
+    L -->|handle| G["Log.Message 'preloaded name'; next DLL (:79)"]
+    G --> S["succeeded = true (:82-84)"]
+    N["why (:12-31): the game Assembly.LoadFrom-s every DLL under Assemblies\, where a native DLL would break loading; Native\ is off the search path, so each DLL is loaded by full path first and later P/Invokes resolve to the loaded module"]

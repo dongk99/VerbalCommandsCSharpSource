@@ -1,0 +1,19 @@
+flowchart TB
+  in["NEW: AgentCoolerCheck.Note(plan, map, placed)<br/>overloads: (def, cell, rot) / (def, cells, rot) / List of Placed"]
+  in --> each{"NEW: each placed thing: def.thingClass is Building_Cooler?"}
+  each -- no --> skip[NEW: skip]
+  each -- yes --> sides["NEW: cold = cell + South.RotatedBy(rot)<br/>hot = cell + North.RotatedBy(rot)<br/>(Building_Cooler.cs:18-19)"]
+  sides --> place{"NEW: PLACE of each side cell"}
+  place -- "under fog" --> unseen["NEW: unseen at X, Z"]
+  place -- "Impassable (wall, rock)" --> wall["NEW: a wall at X, Z (the cooler won't run)"]
+  place -- "no room / not ProperRoom / UsesOutdoorTemperature" --> outside["NEW: outside at X, Z"]
+  place -- "built room" --> room["NEW: ROLE at X, Z (VocabularyText.RoomLabel)"]
+  unseen --> note
+  wall --> note
+  outside --> note
+  room --> note
+  note["NEW: plan note:<br/>Cooler at X, Z facing DIR: cold side blows into PLACE, hot side into PLACE. Confirm, or flip it?"]
+  note --> confirm["NEW: plan.askConfirm = true; confirmBy = Cooler check<br/>(waits for apply even under raw apply)"]
+  err["NEW: any exception: Log.Warning, plan goes on"]
+  class in,each,skip,sides,place,unseen,wall,outside,room,note,confirm,err new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

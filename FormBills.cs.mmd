@@ -1,0 +1,10 @@
+flowchart TD
+    D["DispatchMore(c)"] --> W["DispatchWave1 (FormWave1.cs)"]
+    W -->|null| BD{"form == bill delete?"}
+    BD -->|yes| PD["PlanBillDelete"]
+    BD -->|no| BS{"form starts with 'bill '?"}
+    BS -->|yes| PB["PlanBillForm"]
+    BS -->|no| DC["DispatchControls (FormControls.cs)"]
+    DC -->|null| DG["DispatchGroups (FormGroups.cs)"]
+    R["ResolveOneBench: BENCH [ROOM]; more than one -> Fault 'say which room'"]
+    M["MatchRecipe: exact label, else all words; none or several -> Fault"]

@@ -1,0 +1,11 @@
+flowchart TD
+    B["BuildInitialRequest (:211) / BuildErrorExplainRequest (:226)"] --> F["BuildFirstUserContent (:178): order text, ROUTER REWRITE (optional), snapshot JSON, SCOPED STORAGE DATA (optional)"]
+    B --> BB["BuildBody (:271): model, max_tokens, system, messages, tools, tool_choice; output_config.effort only when ShouldSendEffort (:284-289, :294-320)"]
+    W["SendWithEffortFallbackAsync (:442)"] --> S["SendAsync(body, apiKey, timeout, ct, baseUrl) (:379)"]
+    W -->|400 invalid_request_error naming effort / output_config (:469-477)| R["retry once without output_config; effortDropped = true (:454-459)"]
+    S --> U["MessagesUrl(baseUrl) (:361): empty -> https://api.anthropic.com/v1/messages (:144); else baseUrl + /v1/messages"]
+    S --> H["POST; headers x-api-key = apiKey, anthropic-version 2023-06-01 (:387-388); TLS 1.2 (:157)"]
+    H --> T["timeout -> TimeoutException (:400-403)"]
+    H --> E["non-2xx -> AnthropicApiException(status, type, message, request_id, body) (:405-432); provider = host when baseUrl was set (:428-431)"]
+    H --> P["ParseResponse (:479): stop_reason, stop_details.explanation, content text / tool_use blocks"]
+    PF["PlainFailure.Describe (:54): any exception -> plain words; DescribeApi maps 401/402/403/404/413/429/529/5xx (:94-136)"]

@@ -1,0 +1,10 @@
+flowchart TD
+    N["NoteTake / NoteOutbox(name) (:98-112): Task.Run ReadAfterOrder; called by AgentInbox, so only while the agent inbox runs"] --> F["FindSession(name) (:243): session id in the inbox file name (regex :59) -> TranscriptOf (:314); else the locked transcript's tail holds the name (:259); else every *.jsonl written in the last 15 min under CLAUDE_CONFIG_DIR or ~/.claude/projects and CODEX_HOME or ~/.codex/sessions, newest first, whose 512 KB tail holds the name (:265-309)"]
+    F --> R{"app"}
+    R -->|Claude Code| C["ReadClaude (:352): last 2 MB; newest compact_boundary uuid (:358-369); last non-sidechain assistant line's usage: input + cache_read + cache_creation (:370-388)"]
+    R -->|Codex| X["ReadCodex (:392): last token_count payload: last_token_usage.input_tokens, model_context_window (:397-424)"]
+    C --> U["contextTokens / contextWindow; compactions++ on a new mark, a drop to under half, or another session (:188-231)"]
+    X --> U
+    RR["NoteRouterReply(model, usage) (:116): the router model's context from the API reply's usage (:132-148)"] --> S
+    U --> S["StateFields() (:151): agent, agent_session, agent_context_tokens, agent_context_window, router_model, router_context_tokens -> inbox_state.json (written by AgentInbox)"]
+    T["ReadTail (:456): FileStream read-only, shared; ConfigRoot (:429): the env var, else the user profile folder; Warn (:517): each message once, Player.log"]

@@ -1,0 +1,16 @@
+flowchart TD
+    D["LlmDefaults.FromSettings (:57): apiKey, useHeadless, claudeExePath, fallbackModel copied from settings on the main thread"]
+    R["LlmTargets.Resolve(role, defaults) (:149)"] --> E["LlmEnv.Read() (:300): save data\VerbalCommands\.env, re-read when its write time changes (:318-324)"]
+    E --> T["EnsureTemplate (:374): file missing -> Directory.CreateDirectory + File.WriteAllText(Template, all lines commented) (:383-384)"]
+    R --> P["ROLE_PROVIDER -> ProviderOf (:212): anthropic / claude_cli / openai; presets ollama, lmstudio, openrouter, gemini set baseUrl (:225-237); unknown name = openai (:238)"]
+    R --> U["ROLE_BASE_URL overrides baseUrl (:169-173)"]
+    R --> K{"ROLE_API_KEY set? (:175)"}
+    K -->|yes| K1["apiKey from .env, keyFromEnv (:178-179)"]
+    K -->|no, provider anthropic| K2["apiKey = settings-page key (:181-185): the settings key is never sent to another provider"]
+    R --> X["ROLE_CLAUDE_PATH else settings claudeExePath (:187)"]
+    R --> M["ROLE_MODEL else settings.model (fallback) / router_model.txt (main) / DefaultRouterModel (:189-206)"]
+    D --> R
+    C["LlmClient.SendAsync (:432) / SendWithEffortFallbackAsync (:442)"] -->|OpenAi| O["OpenAiClient.SendAsync (:482): ToChatBody (:530), up to 2 retries on HTTP 400 for max_completion_tokens / response_format (:493-523)"]
+    C -->|Anthropic| A["AnthropicClient.SendAsync(body, apiKey, timeout, ct, baseUrl) (:438, :448)"]
+    O --> PO["PostAsync (:693): HttpClient POST ChatUrl(baseUrl) (:472-480); header Authorization: Bearer apiKey when a key is set (:700-703); TLS 1.2 (:466); caller timeout (:704-716)"]
+    PO --> PC["ParseChat (:760): choices[0] -> Anthropic-shaped LlmResponse: text, tool_calls -> tool_use blocks, finish_reason -> stop_reason (:821-843)"]

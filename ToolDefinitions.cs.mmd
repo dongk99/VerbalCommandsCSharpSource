@@ -1,0 +1,13 @@
+flowchart TD
+    SP["BuildSystemPrompt(settings, offerStorage, offerBuild) (:54): SystemPromptBase (:15-29) + storage rules (:32-48) when offered + BuildTools.SystemPromptBuild when offered + settings.systemPromptExtra (:61-66)"]
+    BT["BuildTools(snap, offerStorage, offerBuild) (:74)"] --> T1["set_schedule: targets + 24 slots, enum from snap.timeAssignmentNames (:103-128)"]
+    BT --> T2["create_allowed_area: name, room_roles from snap.roomRoleNames, include_own_bedroom, targets (:139-167)"]
+    BT --> T3["set_work_priorities: targets + list of (work_type from snap.workTypeNames, priority 0-4) (:177-211)"]
+    BT --> T4["define_group: slot, name, rule (weapon_class, min / max range, allowed_weapons, include_unarmed), always_include_ids, always_exclude_ids (:222-292)"]
+    BT --> T5["clear_group: slot (:297-312)"]
+    BT -->|offerStorage| T6["set_storage: storage_ids, mode, priority enum, allow / disallow categories, items, special, hit_points and quality (nullable) (:347-403)"]
+    BT -->|offerBuild| T7["BuildTools.AddTools (:89)"]
+    TG["BuildTargetsSchema (:471): mode all / no_rest_need / ids, ids list"] --> T1
+    TG --> T2
+    TG --> T3
+    W["BuildTargetsUsingTool (:500): name, description, input_schema, strict = true"]

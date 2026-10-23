@@ -1,0 +1,7 @@
+flowchart TD
+    C["Configure(saveRouterLog or ForceOn): logs dir under SaveData VerbalCommands logs"] --> W["Write(ctx, kind, fields): utc, kind, order_id, turn, game time + fields"]
+    W --> Q["one queue, one writer thread (records stay in order)"]
+    Q --> E["EnsureFile once: keep newest 20; router_yyyy-MM-dd_HHmmss.jsonl; session record (model, provider, system_prompt)"]
+    E --> A["AppendRaw: Redact sk-ant / sk- keys, one JSON line"]
+    N["NotePrompt: system_prompt record when the prompt hash changed"] --> Q
+    K["kinds seen in OrderController / RouterGame: order, player_answer, haiku_sent, haiku_reply, route, answer, plan, decision, action, error, cleared"]

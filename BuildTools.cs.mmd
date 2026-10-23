@@ -1,0 +1,16 @@
+flowchart TB
+  subgraph many["build plan from several spots, around line 470-486"]
+    m_in["spots: def, cell, rot -> windPlaced"] --> m_mat["note: Materials"]
+    m_mat --> m_checks["AgentWindCheck / AgentLightCheck / AgentWorkspotCheck / AgentDoorCheck .Note(windPlaced)"]
+    m_checks --> m_cool["AgentCoolerCheck.Note(plan, map, windPlaced)"]
+    m_cool --> m_vent["NEW: AgentVentCheck.Note(plan, map, windPlaced)"]
+    m_vent --> m_ret[return plan]
+  end
+  subgraph option["build option pieces, around line 1160-1175"]
+    o_in["pieces: walls, doors, furniture, wall fittings (ordered)"] --> o_checks["AgentWindCheck / AgentLightCheck / AgentWorkspotCheck / AgentDoorCheck .Note(pieces as Placed)"]
+    o_checks --> o_cool["AgentCoolerCheck.Note(plan, map, pieces as Placed)"]
+    o_cool --> o_vent["NEW: AgentVentCheck.Note(plan, map, pieces as Placed)"]
+    o_vent --> o_parts[plan line: counts per label]
+  end
+  class m_vent,o_vent new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

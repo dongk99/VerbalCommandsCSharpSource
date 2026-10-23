@@ -1,0 +1,11 @@
+flowchart TD
+    V["BuildVocabulary(map) (:308): storage words, build words, storage building labels, room labels, bench labels, colonist names, group word / names / slots 1-9, work types, time assignments"] --> M1["Match(orderText, vocab) (:516): normalized substring or word-boundary hits, longest span wins (:549-574); Combinations (:595): storage, schedule, allowed area, work priorities, groups, build"]
+    M1 -->|a combination found| FR
+    M1 -->|none| RC["RunRouterAsync (:664): MAIN role via LlmTargets.Resolve; user text = ORDER + VOCABULARY JSON (:683); cap 20 s API / 40 s CLI (:202-203)"]
+    RM["ReadRouterModel (:276): save data\VerbalCommands\router_model.txt, created with the default when missing (:281-285)"] --> RC
+    RC --> C1["CallOnceAsync (:754): CLI -> HeadlessClient.SendStructuredAsync; else Messages body: RouterInstruction (:244-257), RouterSchemaJson (:235-242), max_tokens 1024, output_config json_schema (:772-794)"]
+    C1 -->|refusal / max_tokens / empty / bad JSON| RE["RouterReplyException (:797-823)"]
+    RC -->|non-default model from router_model.txt failed, time left| TG["typo guard: one retry with claude-haiku-4-5 (:708-748)"]
+    C1 --> FF["FillFromReply (:826): rewritten, rooms, benches, storage"]
+    FF --> FR["FinishRoute (:880): Match on the rewrite, merged with step 1 and the router's rooms / benches that equal vocabulary entries (:888-927); storageMatched -> StorageIndex.Build slice for the named rooms / benches (:942-982)"]
+    LG["LogToPlayerLog / DescribeForWindow (:997-1058): Player.log never carries the order or the rewrite; the order window may"]

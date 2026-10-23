@@ -1,0 +1,15 @@
+flowchart TD
+  lines["Lines(map): hourly reminder scan"] --> each["each proper room, labeled role, not UsesOutdoorTemperature, centre visible (max 20)"]
+  each --> state{"below 10C and not kept cold on purpose?<br/>above 35C and not kept hot on purpose?"}
+  state -- neither --> next[skip]
+  state -- "cold, outdoors 10C or more (freezer)" --> next
+  state -- "cold or hot" --> head["[REMINDER] The ROOM (X, Z) is T while outdoors is T: below 10C / above 35C. ADVICE<br/>HarnessLog.Note room temperature"]
+  head --> advice["Advice: cold -> build heater; hot + outdoors above 35C -> add cooler; hot else -> spread heat"]
+  head --> vent["Vent(map, room, cold, pairs)"]
+  vent --> walls["each room cell + cardinal: wall w, other side o"]
+  walls --> ok{"w: placeOverable or smoothed wall<br/>c and o passable<br/>o: other proper room, not outdoors"}
+  ok -- "w is a vent" --> vented[other already vented]
+  ok -- yes --> gain{"other at least 5C better on helpful side?"}
+  gain -- yes --> best[keep best other room]
+  best --> out["one line per room pair, not if already vented<br/>HarnessLog.Note vent<br/>[REMINDER] ... consider making a vent there"]
+  kept["KeptAt: cooler in/beside set below 10C, heater above 35C"] -.- state

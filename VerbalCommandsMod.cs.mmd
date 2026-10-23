@@ -1,0 +1,9 @@
+flowchart TD
+    S["VerbalCommandsSettings : ModSettings (:11)<br/>ExposeData: Scribe_Values.Look(ref agentInbox, 'agentInbox', false) (:99)"]
+    M["VerbalCommandsMod : Mod (:143)"] --> G["Settings = GetSettings&lt;VerbalCommandsSettings&gt;() (:172)"]
+    G --> S
+    M --> C["SettingsCategory() (:311)"]
+    M --> D["settings window: new Listing_Standard (:329)"]
+    D --> CB["listing.CheckboxLabeled(key.Translate(), ref Settings.X) (:400, :430-438)<br/>e.g. VerbalCommands_Settings_AgentInbox -> agentInbox (:438)"]
+    D --> TIP["CheckboxWithTip: Widgets.CheckboxLabeled + instant tooltip (:264-273)"]
+    D --> H["headless row: Widgets.CheckboxLabeled(..., disabled: true) (:393)"]

@@ -1,0 +1,134 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\VerbalCommands\\VerbalCommands.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\RouterScript\\RouterScript.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\RouterScript\\RouterScript.csproj",
+        "projectName": "RouterScript",
+        "projectPath": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\RouterScript\\RouterScript.csproj",
+        "packagesPath": "C:\\Users\\dongk\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\RouterScript\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\dongk\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {}
+        },
+        "frameworks": {
+          "net472": {
+            "framework": "net472",
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.300"
+      },
+      "frameworks": {
+        "net472": {
+          "framework": "net472",
+          "targetAlias": "net472",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\VerbalCommands\\VerbalCommands.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\VerbalCommands\\VerbalCommands.csproj",
+        "projectName": "VerbalCommands",
+        "projectPath": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\VerbalCommands\\VerbalCommands.csproj",
+        "packagesPath": "C:\\Users\\dongk\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\VerbalCommands\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\VerbalCommands\\NuGet.Config",
+          "C:\\Users\\dongk\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "framework": "net472",
+            "targetAlias": "net472",
+            "projectReferences": {
+              "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\RouterScript\\RouterScript.csproj": {
+                "projectPath": "C:\\Users\\dongk\\.claude\\projects\\RimWorld-LLM-Integration\\src\\RouterScript\\RouterScript.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.300"
+      },
+      "frameworks": {
+        "net472": {
+          "framework": "net472",
+          "targetAlias": "net472",
+          "dependencies": {
+            "Concentus": {
+              "target": "Package",
+              "version": "[2.2.2, )"
+            },
+            "Concentus.Oggfile": {
+              "target": "Package",
+              "version": "[1.0.7, )"
+            },
+            "NWaves": {
+              "target": "Package",
+              "version": "[0.9.6, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

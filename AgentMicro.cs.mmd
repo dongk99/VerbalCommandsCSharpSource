@@ -1,0 +1,15 @@
+flowchart TB
+  plan["Plan(c) ~329: micro mine / micro haul"] --> rs["ReadSite ~484: AREA (TryRect, +1 edge) or SPOT (8x8 / zone + edge)"]
+  rs --> ps["PlanSite ~335"]
+  ps --> mine{"mine?"}
+  mine -- yes --> no["NearestOre ~660: nearest cell whose YieldOf is not null"]
+  no --> yo["YieldOf ~638: null if fogged (AgentPlace.Visible),<br/>no mineable, or the yield is a chunk (plain rock)"]
+  yo --> none{"found?"}
+  none -- no --> f1["Fault: There is no ore in view near PLACE."]
+  none -- yes --> pawns
+  mine -- "no (haul)" --> res["Resources ~796: items on cells that are Visible"]
+  res --> pawns{"PAWNS given?"}
+  pawns -- no --> q["pawn question (skill, capacities, travel hours)"]
+  pawns -- yes --> go["per pawn: quota by Mining skill, nearest reachable ore tile"]
+  go --> start["Start ~894 -> StartMining: Designator_Mine on the tile + prioritized mine job"]
+  start --> run["Update / Check every 3 s: AfterMined (veins via YieldsNear, other-resources question),<br/>hauling, Finish message"]

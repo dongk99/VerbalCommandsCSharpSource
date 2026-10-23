@@ -1,0 +1,21 @@
+flowchart TB
+  subgraph at["PlanAt (build at / place at)"]
+    at_in[BUILDING, STUFF?, SPOT, FACING?] --> at_rot["RotFor: FACING -> Rot4"]
+    at_rot --> at_cell["CellProblem: can a blueprint go there?"]
+    at_cell --> at_line["plan line: Build LABEL at CELL, FacingText"]
+    at_line --> at_checks["AgentWindCheck / AgentLightCheck / AgentWorkspotCheck / AgentDoorCheck .Note"]
+    at_checks --> at_cool["AgentCoolerCheck.Note(plan, map, def, cell, rot)"]
+    at_cool --> at_vent["NEW: AgentVentCheck.Note(plan, map, def, cell, rot)"]
+    at_vent --> at_write["plan.writes: BlueprintWrite / PlaceWrite"]
+  end
+  subgraph near["PlanNear (build near / place near)"]
+    near_in[COUNT?, BUILDING, STUFF?, SPOT, FACING?] --> near_pick["pick nearest free cells (RadialCellsAround)"]
+    near_pick --> near_line["plan line: Build N LABEL near SPOT: cells"]
+    near_line --> near_checks["AgentWindCheck / AgentLightCheck / AgentWorkspotCheck / AgentDoorCheck .Note"]
+    near_checks --> near_cool["AgentCoolerCheck.Note(plan, map, def, picks, rot)"]
+    near_cool --> near_vent["NEW: AgentVentCheck.Note(plan, map, def, picks, rot)"]
+    near_vent --> near_write[plan.writes]
+  end
+  anywhere["PlanAnywhere (geyser only): unchanged, no cooler"]
+  class at_vent,near_vent new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

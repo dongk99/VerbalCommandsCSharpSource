@@ -1,0 +1,11 @@
+flowchart TD
+    subgraph raw["OnScriptDone(outcome, orderText, ...) - raw router path"]
+        a1["RouterLog.Write(ctx, route: result, lines, question, plan_count)"] --> a2["REMOVED: outcome.kind Failed or Cannot:<br/>GuessLog.Add(orderText, lines joined by ' / ')"]
+        a2 --> a3["TryFallbackRun, then switch on outcome.kind (unchanged)"]
+    end
+    subgraph llm["OnResponse(r) - older router + main model path, per tool_use"]
+        b1["catch Fault: AppendLog not done; RouterLog.Write route failed, toolName: fault"] --> b2["REMOVED: GuessLog.Add(lastOrderText, toolName: fault.Message)"]
+        b2 --> b3["explainErrorsWithLlm -> SendExplainRequest (unchanged)"]
+    end
+    class a2,b2 removed
+    classDef removed fill:#f7b6b6,stroke-dasharray:6 4

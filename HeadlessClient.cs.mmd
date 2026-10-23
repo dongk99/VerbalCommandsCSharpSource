@@ -1,0 +1,12 @@
+flowchart TD
+    S["SendAsync (:59) / SendStructuredAsync (:129) / SendTextAsync (:181) / ExplainAsync (:226)"] --> R["ResolveClaudeExePath (:354): the setting's path if File.Exists (:361) -> where.exe claude (:385) -> %USERPROFILE%\.local\bin\claude.exe (:51, :374); cached (:356)"]
+    S --> P["WriteTempSystemPromptFile (:616): %TEMP%\verbalcommands_sysprompt_guid.txt; deleted in finally (:117, :169, :218)"]
+    S --> A["args: -p instruction, --output-format json, optional --json-schema, --model, optional --effort, --system-prompt-file, --permission-mode dontAsk (:70-84, :137-149, :189-199, :231-241)"]
+    S --> I["stdin: ORDER + optional ROUTER REWRITE + SNAPSHOT + optional SCOPED STORAGE DATA (:86-95, :243)"]
+    A --> Q["BuildArgumentString / QuoteArgument (:560-612): CRT argv quoting"]
+    Q --> X["RunProcessAsync (:438): Process.Start of the exe itself, no shell, no window, stdio redirected, cwd = %TEMP% (:440-461)"]
+    X -->|timeout or cancel| K["KillProcessTree: taskkill /PID /T /F, then Kill (:526-556)"]
+    X --> E["ParseEnvelopeOrThrow (:623): stdout as JSON; is_error or exit != 0 -> HeadlessFailure via DescribeCliFailure (:656-672)"]
+    E --> O["structured_output, else the outermost {...} in result (:101-105, :675-736)"]
+    O --> L["BuildLlmResponseFromStructured (:310): message -> text block; each tool's array -> tool_use blocks headless_N"]
+    J["BuildJsonSchema (:272): one array per tool, items = that tool's input_schema (cloned)"] --> A

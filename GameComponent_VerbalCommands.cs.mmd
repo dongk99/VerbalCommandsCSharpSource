@@ -1,0 +1,9 @@
+flowchart TD
+    expose["ExposeData()"] --> h["vcColonyId, vcHarnessLog (HarnessEntries) - unchanged"]
+    h --> g["REMOVED: Scribe_Collections vcGuessLog -> guessEntries (List of HarnessEntry, LookMode.Deep)<br/>PostLoadInit: null -> empty list, drop null items (as vcHarnessLog)"]
+    props["properties"] --> he["HarnessEntries, ColonyId - unchanged"]
+    props --> ge["REMOVED: GuessEntries (as HarnessEntries)"]
+    loaded["LoadedGame()"] --> hl["HarnessLog.OnLoaded() - unchanged"]
+    hl --> gl["REMOVED: GuessLog.OnLoaded()"]
+    class g,ge,gl removed
+    classDef removed fill:#f7b6b6,stroke-dasharray:6 4

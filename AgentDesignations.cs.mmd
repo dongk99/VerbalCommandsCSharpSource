@@ -1,0 +1,17 @@
+flowchart TB
+  p["Plan(c) ~108: designate VERB / items forbid|unforbid"] --> pf["ParseForm"]
+  pf --> mode["MODE: all / area / near / nearest / room<br/>(area: AgentPlace.TryRect; near: TryCell)"]
+  mode --> des["MakeDesignator: the game's Designator_* for the verb"]
+  des --> en["Enumerate ~434: candidates"]
+  en --> sm{"verb smooth?"}
+  sm -- yes --> sc["every map cell that is AgentPlace.Visible (not fogged)"]
+  sm -- no --> st["Sources(verb) things that are spawned AND AgentPlace.Visible<br/>(mine: t.def.mineable)"]
+  sc --> match["MatchesWords -> EnsureAccept (CanDesignateCell / CanDesignateThing)"]
+  st --> match
+  match --> scope["InScope / nearest sort"]
+  scope --> out{"chosen count"}
+  out -- 0 --> zero["Zero(...) reply"]
+  out -- "> cap" --> cap["Capped(...)"]
+  out -- ok --> build["Build -> ApplyAll ~1597 (skips cells no longer Visible, 1613)"]
+  note["Router (router.txt:424-430): every 'mine ...' sentence now goes to AgentMicro ('micro mine');<br/>no mine sentence only marks any more"]
+  p -.-> note

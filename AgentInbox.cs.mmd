@@ -1,0 +1,11 @@
+flowchart TD
+    U["Update every frame -> Poll every 0.5 s (inbox on, game playing)"] --> J{"job running and controller done?"}
+    J -->|yes| FJ["FinishJob -> WriteOutbox(result)"]
+    U --> T["TakeNext: oldest *.txt, max 16 KB, UTF-8, moved to taken"]
+    T --> R{"text is apply / cancel?"}
+    R -->|yes| WR["WorkReply: ApplyAll / CancelPending / drop question"]
+    R -->|no| H["mode: raw dry apply wait header"]
+    H --> WO["WorkOrder: plan waiting -> rejected; micro question -> answer; else controller.Submit(text, options)"]
+    WO --> FJ
+    FJ --> O["outbox json: text, router_lines (Haiku reply split, or raw text), result, answers, plan_lines, notes, risky, actions, question, reasons, waiting, window_log, tips, reminders"]
+    U --> S["WriteStateIfChanged: inbox_state.json (waiting, paused, events, hourly)"]

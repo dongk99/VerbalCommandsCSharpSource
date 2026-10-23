@@ -1,0 +1,62 @@
+flowchart TB
+  subgraph line_form["line form (build LABEL line from RECT), around line 160-178"]
+    l_in[BUILDING, STUFF?, RECT, FACING?] --> l_cells["toPlace: cells of the line, skipping ones that already have one"]
+    l_cells --> l_line["plan line: Build N LABEL from RECT"]
+    l_line --> l_checks["AgentWindCheck / AgentLightCheck / AgentWorkspotCheck / AgentDoorCheck .Note"]
+    l_checks --> l_cool["AgentCoolerCheck.Note(plan, map, def, toPlace, rot)"]
+    l_cool --> l_vent["NEW: AgentVentCheck.Note(plan, map, def, toPlace, rot)"]
+    l_vent --> l_write["plan.writes: BlueprintsWrite"]
+  end
+
+  subgraph shell["PlanShell(map, rect, side, stuff, dig) ~650-998: build room new (dig=false) / dig room (dig=true)"]
+    s_in["inside cells"] --> s_vis{"cell fogged?<br/>(AgentPlace.Visible)"}
+    s_vis -- no --> s_look["look at what stands there:<br/>rock (dig only) / blocked / plants"]
+    s_vis -- yes --> s_unexp["unexplored list"]
+    s_unexp --> s_digq{"dig?"}
+    s_digq -- "no (build room)" --> s_throw["Fault: part of the inside has not been explored yet<br/>(unchanged)"]
+    s_digq -- yes --> s_old["REMOVED: same Fault for dig room"]
+    s_digq -- yes --> s_fogmark["fogged inside cells are marked for mining like a player's drag<br/>(Designator_Mine.cs:41-43 accepts fogged cells);<br/>what is under them is never looked at"]
+    s_fogmark --> s_col["fogged cells on the column grid (ColumnCells) are left unmarked"]
+    s_look --> s_nothing{"dig and no rock inside<br/>AND no fogged cells inside?"}
+    s_col --> s_nothing
+    s_nothing -- yes --> s_nd["Fault: Nothing to dig there"]
+
+    s_door{"door cell fogged?"} -- "yes, build room" --> s_dfail["failure: not explored yet (unchanged)"]
+    s_door -- "yes, dig room" --> s_dfog["nothing planned at the door cell;<br/>added to fogEdge"]
+    s_door -- "yes, dig room" --> s_dold["REMOVED: failure 'not explored yet' for dig room"]
+    s_edge{"edge cell fogged?"} -- "yes, build room" --> s_efail["failure: not explored yet (unchanged)"]
+    s_edge -- "yes, dig room" --> s_efog["nothing planned there; added to fogEdge<br/>(the agent works out rock or open ground once explored)"]
+    s_edge -- "yes, dig room" --> s_eold["REMOVED: failure 'not explored yet' for dig room"]
+
+    s_dfog --> s_note["confirm line: ', mark F fogged cells inside for mining';<br/>door text: 'is under fog, nothing planned there';<br/>note listing the fogged edge cells"]
+    s_efog --> s_note
+    s_fogmark --> s_note
+  end
+
+  subgraph mp["MineProblem(map, cell) ~1354"]
+    m1["in bounds? already marked?"] --> m2{"current map?"}
+    m2 -- yes --> m3["Designator_Mine.CanDesignateCell (fogged = accepted)"]
+    m2 -- no --> m4["fallback copy of Designator_Mine.cs:41-43:<br/>fogged = null (accepted), before GetFirstMineable"]
+    m4 --> m5["GetFirstMineable / mineable tests (unchanged)"]
+  end
+
+  subgraph writes["AddShellWrites ~1001"]
+    w1["mine write: rock cells (unchanged text)"]
+    w2["second mine write: 'Mine designations: F fogged cells of room ...';<br/>readback counts a fogged cell only by its designation<br/>(no GetFirstMineable under fog)"]
+    w3["walls / door / shared doors (unchanged)"]
+    w1 --> w2 --> w3
+  end
+
+  subgraph roof["AddRoofNotes ~1114"]
+    r1["for each inside cell"] --> r2{"fogged?"}
+    r2 -- yes --> r3["roof under it not read; counts only for the support distance"]
+    r2 -- no --> r4["roofed / thick / sky counts (unchanged)"]
+  end
+
+  shell --> writes --> roof
+  writes -. "fogMineCells counted as open" .-> dc["AgentDoorCheck.NoteShell"]
+
+  class l_vent new
+  class s_old,s_dold,s_eold removed
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

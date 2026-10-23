@@ -1,0 +1,7 @@
+flowchart TD
+    Q["Query(map, form, slots): read-only"] --> S{"switch form"}
+    S --> A["query count / relations / group / pawn groups / control group / zones / areas / tips / mental break(s) / buildings / pawn bills / pawn create / room stats"]
+    S -->|none| C["readback pawns / storage / buildings -> gear -> colony reads -> designation queries -> interact -> picture / map / find"]
+    C -->|none| T["query speed / events / pending"]
+    T -->|none| W["QueryWave1"]
+    W -->|none| F["Fail: not built yet"]

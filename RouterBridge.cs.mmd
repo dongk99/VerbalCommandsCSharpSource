@@ -1,0 +1,16 @@
+flowchart TD
+    A["RouteAsync(order, pending, limit, token, entry)"] --> B["Task.Run RouteCoreAsync"]
+    B --> C{"read router.txt and haiku_prompt.md"}
+    C -->|missing| P1["RouteOutcome.Problem"]
+    C --> D["new Run(game, prompt, order, pending); Register host functions"]
+    D --> H["host: vocabulary / pending / haiku(input) / plan(form, slots) / query(form, slots) / log"]
+    D --> E["Script.Load; RunAsync(entry = route or route_raw, order)"]
+    E -->|not ok| P2["Problem with script errors"]
+    E --> F["Run.ReadResult(dict.result)"]
+    F --> K1["plans: lines + handles of ok plans"]
+    F --> K2["ask: question"]
+    F --> K3["answer: lines"]
+    F --> K4["cannot: reason"]
+    F --> K5["failed: reasons"]
+    H --> PL["PlanCoreAsync: resolve THEM / THOSE back-refs, game.PlanAsync; every call kept in planned list"]
+    H --> HK["HaikuAsync: game.HaikuAsync(prompt, input)"]

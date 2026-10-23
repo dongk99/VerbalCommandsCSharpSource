@@ -1,0 +1,10 @@
+flowchart TD
+    V["VocabularyAsync: main thread, VocabularyText.Build(map, orderText)"]
+    P["PlanAsync: main thread, FormPlanner.Dispatch(map, request); plan.slotsJson = slots"]
+    Q["QueryAsync: main thread, FormPlanner.Query(map, form, slots)"]
+    H["HaikuAsync(systemPrompt, input)"] --> T{"fallbackRun?"}
+    T -->|no| M["CallLoggedAsync MAIN role"]
+    T -->|yes| F["CallLoggedAsync FALLBACK role"]
+    M -->|throws| F2["CallLoggedAsync FALLBACK once, note to window"]
+    M --> L["RouterLog haiku_sent (input) then haiku_reply (reply); AgentInbox.NoteHaikuReply"]
+    L --> A["AskModelAsync: CLI or LlmClient; refusal / max_tokens / empty -> ScriptError"]

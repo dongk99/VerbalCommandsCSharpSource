@@ -1,0 +1,13 @@
+flowchart TD
+    D["Dispatch(map, req): FormContext (form lower-case, ' (those)' stripped)"] --> M{"map still loaded?"}
+    M -->|no| F0["Fail"]
+    M --> PK["AgentInstall.PackedFirst (build forms: packed items first)"]
+    PK --> S{"switch form"}
+    S --> ST["storage holds only / also holds / no longer holds / priority -> PlanStorage"]
+    S --> BU["build / build room / build option / build at / near / anywhere / place at / near / line / floor / floor room / room new / dig room / furnished room / cancel blueprint -> Build*"]
+    S --> RU["run -> AgentTime.PlanRun"]
+    S --> ZO["zone * -> AgentZones; area paint / create / delete -> AgentAreas"]
+    S --> PW["bed / allowed area / schedule / work priority / work off / bills / draft / select pawns / move"]
+    S --> GR["weapon group / cleared; control group skill / members / remove / cleared"]
+    S -->|none| CH["AgentInteract.Plan -> AgentPawnActions.Plan -> AgentDesignations / DesignationQueries -> DispatchMore"]
+    CH -->|none| NB["Fail: not built yet"]

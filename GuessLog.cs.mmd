@@ -1,0 +1,12 @@
+flowchart TD
+    rec["REMOVED: Add(what, detail)<br/>called by OrderController where the route result is written,<br/>when the result is Failed or Cannot:<br/>what = the sentence as the agent sent it, detail = the mod's reason lines"] --> gate{"REMOVED: AgentInbox.Enabled and a game?"}
+    gate -- no --> skip["REMOVED: nothing"]
+    gate -- yes --> entry["REMOVED: HarnessEntry tick, when (Day N, Hh), what, detail<br/>gc.GuessEntries.Add + AppendToFile SaveData\VerbalCommands\guess\COLONYID.jsonl"]
+    loaded["REMOVED: OnLoaded: merge the colony file (tick <= now) and import.jsonl (renamed import_used_ID) into the save's list, rewrite the file"]
+    refl["REMOVED: for ColonyAnalysys (section Vagueprompts) by reflection: Count; Rows() newest first<br/>head: when, what, detail, tick, items; sub rows for problems"]
+    same["REMOVED: every line of HarnessLog.cs, with HarnessLog -> GuessLog, HarnessEntries -> GuessEntries, folder harness -> guess;<br/>the hourly-check helpers (H3) left out"]
+    gone["whole file GuessLog.cs deleted; detection now in hook rimworld_vagueprompt_log.py"]
+    class rec,gate,skip,entry,loaded,refl,same removed
+    class gone new
+    classDef removed fill:#f7b6b6,stroke-dasharray:6 4
+    classDef new fill:#b6f2b6

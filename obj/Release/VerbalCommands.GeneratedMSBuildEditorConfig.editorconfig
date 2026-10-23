@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = VerbalCommands
+build_property.ProjectDir = C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\src\VerbalCommands\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 
