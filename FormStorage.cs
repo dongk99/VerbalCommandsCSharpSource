@@ -301,6 +301,46 @@ namespace VerbalCommands
 			return sides;
 		}
 
+		// A door that leads outside (user, 2026-10-25: "unforbid/forbid x (probably x being doors) that goes to outdoors"):
+		// one of the cells next to it can be walked on and is not in a proper indoor room.
+		internal static bool LeadsOutdoors(Map map, Building_Door door)
+		{
+			foreach (IntVec3 offset in GenAdj.CardinalDirections)
+			{
+				IntVec3 cell = door.Position + offset;
+				if (!cell.InBounds(map) || !cell.Walkable(map))
+				{
+					continue;
+				}
+				Room room = cell.GetRoom(map);
+				if (room == null || !room.ProperRoom || room.PsychologicallyOutdoors)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// The player's doors that lead outside; with rooms, only the doors of those rooms.
+		internal static List<Building_Door> DoorsToOutdoors(Map map, List<Room> rooms)
+		{
+			List<Building_Door> result = new List<Building_Door>();
+			foreach (Building building in map.listerBuildings.allBuildingsColonist)
+			{
+				Building_Door door = building as Building_Door;
+				if (door == null || !door.Spawned || !LeadsOutdoors(map, door))
+				{
+					continue;
+				}
+				if (rooms != null && !DoorSides(map, door).Any((Room r) => rooms.Contains(r)))
+				{
+					continue;
+				}
+				result.Add(door);
+			}
+			return result;
+		}
+
 		// ---- ThingFilter names: items first, then categories ------------------------------------------------
 
 		internal static void ClassifyThings(List<string> names, List<string> categories, List<string> items)

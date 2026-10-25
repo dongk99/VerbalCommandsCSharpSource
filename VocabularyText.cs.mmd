@@ -1,0 +1,11 @@
+flowchart TD
+  note["VocabularyText.cs: only the doors line diagrammed (lines 57, 310-335); the rest not read yet"]
+  line["AddLine 'doors' (line 57) -> Doors(map)"] --> each["each spawned player Building_Door"]
+  each --> sides["FormPlanner.DoorSides(map, door): the rooms on its sides"]
+  sides --> filt["drop generic room roles (StorageIndex.IsGenericRoomRole)<br/>-> an outdoors side is dropped: no 'X to outdoors' entry"]
+  filt --> lab["RoomLabel each, distinct, sorted"]
+  lab --> pairs["one entry per pair: 'kitchen to dining room'"]
+  lab --> outE["NEW the door LeadsOutdoors (FormStorage): one entry per named side: 'bedroom to outdoors'"]
+  class outE new
+  classDef new fill:#b6f2b6
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

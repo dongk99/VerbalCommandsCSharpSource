@@ -1,0 +1,7 @@
+flowchart TD
+  note["RoomStats.cs: only RoomsByNameOrId diagrammed (lines 34-50); the rest not read yet"]
+  in["RoomsByNameOrId(map, text)"] --> id{"text matches ^room([0-9]+)$ (ignore case)?"}
+  id -- yes --> find["the room with that Room.ID; none -> Fault 'Nothing on the map has the ID ...'"]
+  id -- no --> lbl["FormPlanner.ResolveRooms(map, text): every room with that label, ordered by ID"]
+  classDef new fill:#b6f2b6
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

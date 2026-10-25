@@ -1,15 +1,25 @@
 flowchart TB
   subgraph ns["NoteShell(plan, map, shell) ~56-74"]
-    a{"shell.placeDoor and door valid?"} -- no --> ret["return (no door check;<br/>a fogged dig-room door lands here)"]
-    a -- yes --> b["placed: wall blueprints + the door"]
+    a0{"shell has wall cells?"} -- no --> ret0["return"]
+    a0 -- yes --> b["placed: wall blueprints<br/>+ the door if shell.placeDoor and door valid"]
+    a{"REMOVED: shell.placeDoor and door valid?"}
+    ret["REMOVED: return before anything when no door<br/>(walls without a door were never checked)"]
     b --> c["open = shell.mineCells (+ door if in rock)"]
     c --> c2["open also gets shell.fogMineCells:<br/>fogged cells this dig room marks count as dug,<br/>not as whatever is under the fog"]
     c2 --> d["Note(plan, map, placed, open)"]
   end
-  subgraph nt["Note(...) ~76-: unchanged"]
+  subgraph nt["Note(...)"]
     d --> e["Sim: walls, doors, open cells"]
-    e --> f["flood fill from each side of each door"]
-    f --> g["enclosure across from an existing room?<br/>note + askConfirm"]
+    e --> bl["NEW BlockedDoors: each new wall of this order;<br/>look 1-3 cells N/E/S/W of it for a door<br/>(built, blueprint, frame, or this order's)"]
+    bl --> ax{"that direction is the door's way through?<br/>(the door's two side cells across it bound:<br/>it sits in a wall line; door in no wall line: both ways)"}
+    ax -- yes --> bn["note: DOOR BLOCKED ... (wording: user picks)<br/>+ askConfirm, confirmBy 'Door block check'"]
+    ax -- no --> nd
+    bn --> nd{"this order puts down a door?"}
+    nd -- no --> ret2["return"]
+    nd -- yes --> f["flood fill from each side of each door"]
+    f --> g["enclosure across from an existing room?<br/>note + askConfirm (unchanged)"]
   end
-  class c2 new
+  class a0,b,bl,ax,bn,nd,ret2 new
+  class a,ret removed
   classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

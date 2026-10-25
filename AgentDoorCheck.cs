@@ -32,6 +32,7 @@ namespace VerbalCommands
 	{
 		private const int MaxCells = 600;
 		private const int MaxNamed = 4;
+		private const int BlockReach = 3;   // cells in front of / behind a door (user, 2026-10-25: "lets say, 3 blocks")
 
 		private static readonly IntVec3[] Cardinals = new IntVec3[] { IntVec3.North, IntVec3.East, IntVec3.South, IntVec3.West };
 
@@ -55,20 +56,29 @@ namespace VerbalCommands
 		// The room forms (build room new, dig room, furnished room): walls, the door, and the cells mined open.
 		internal static void NoteShell(Plan plan, Map map, RoomShell shell)
 		{
-			if (shell == null || !shell.placeDoor || !shell.door.IsValid)
+			// A room without a door still goes in: its walls can block an existing door (blocked-door check, 2026-10-25).
+			if (shell == null || shell.wallCells == null)
 			{
 				return;
 			}
+			bool withDoor = shell.placeDoor && shell.door.IsValid;
 			List<AgentWindCheck.Placed> placed = new List<AgentWindCheck.Placed>();
 			foreach (IntVec3 c in shell.wallCells)
 			{
 				placed.Add(new AgentWindCheck.Placed(ThingDefOf.Wall, c, ThingDefOf.Wall.defaultPlacingRot));
 			}
-			placed.Add(new AgentWindCheck.Placed(ThingDefOf.Door, shell.door, ThingDefOf.Door.defaultPlacingRot));
+			if (withDoor)
+			{
+				placed.Add(new AgentWindCheck.Placed(ThingDefOf.Door, shell.door, ThingDefOf.Door.defaultPlacingRot));
+			}
+			if (placed.Count == 0)
+			{
+				return;
+			}
 			HashSet<IntVec3> open = new HashSet<IntVec3>(shell.mineCells);
 			// The fogged cells a dig room marks count as dug, not as whatever is under the fog (2026-10-21).
 			open.UnionWith(shell.fogMineCells);
-			if (shell.doorInRock)
+			if (withDoor && shell.doorInRock)
 			{
 				open.Add(shell.door);
 			}
@@ -108,11 +118,12 @@ namespace VerbalCommands
 						doors.Add(p.cell);
 					}
 				}
+				Sim sim = new Sim(map, planWalls, planDoors, open ?? new HashSet<IntVec3>());
+				NoteBlockedDoors(plan, map, sim, planWalls);
 				if (doors.Count == 0)
 				{
 					return;
 				}
-				Sim sim = new Sim(map, planWalls, planDoors, open ?? new HashSet<IntVec3>());
 
 				// Each door: the enclosures on its sides that are rooms being built.
 				List<HashSet<IntVec3>> rooms = new List<HashSet<IntVec3>>();
@@ -203,6 +214,65 @@ namespace VerbalCommands
 				// A check that only informs must never stop a plan.
 				Log.Warning("[VerbalCommands] door check skipped: " + ex.Message);
 			}
+		}
+
+		// ---- blocked doors --------------------------------------------------------------------------------------
+
+		// A new wall of this order 1-BlockReach cells in front of or behind a door (built, blueprint, frame, or this
+		// order's), along the door's way through. User, 2026-10-25: "*WARNS* them if there's going to be a wall right
+		// next to a door so it becomes impassable.. lets say, 3 blocks infront/behind of the door". Found when a play
+		// agent's room form put a wall 1 cell in front of the lab door (agent_player\play_sessions\day_03.md:69).
+		private static void NoteBlockedDoors(Plan plan, Map map, Sim sim, HashSet<IntVec3> planWalls)
+		{
+			// door -> the nearest new wall and its distance
+			Dictionary<IntVec3, KeyValuePair<IntVec3, int>> blocked = new Dictionary<IntVec3, KeyValuePair<IntVec3, int>>();
+			foreach (IntVec3 w in planWalls)
+			{
+				foreach (IntVec3 d in Cardinals)
+				{
+					for (int k = 1; k <= BlockReach; k++)
+					{
+						IntVec3 door = new IntVec3(w.x + d.x * k, 0, w.z + d.z * k);
+						if (!door.InBounds(map) || planWalls.Contains(door) || !sim.IsDoor(door) || !WayThrough(map, sim, door, d))
+						{
+							continue;
+						}
+						KeyValuePair<IntVec3, int> had;
+						if (!blocked.TryGetValue(door, out had) || k < had.Value)
+						{
+							blocked[door] = new KeyValuePair<IntVec3, int>(w, k);
+						}
+					}
+				}
+			}
+			if (blocked.Count == 0)
+			{
+				return;
+			}
+			foreach (KeyValuePair<IntVec3, KeyValuePair<IntVec3, int>> kv in blocked.OrderBy((KeyValuePair<IntVec3, KeyValuePair<IntVec3, int>> b) => b.Value.Value).Take(MaxNamed))
+			{
+				int k = kv.Value.Value;
+				plan.notes.Add("DOOR BLOCKED: the new wall at " + AgentWorkspotCheck.Xz(kv.Value.Key) + " is " + k + (k == 1 ? " cell" : " cells")
+					+ " in front of the door at " + AgentWorkspotCheck.Xz(kv.Key) + "; the door may become impassable. Really build it? Say apply to build it anyway, or cancel.");
+			}
+			plan.askConfirm = true;
+			plan.confirmBy = "Door block check";   // the harness log (HarnessLog.cs, H4)
+		}
+
+		// D (a cardinal) is a way through DOOR: the door sits in a wall line across D (both side cells bound), or in no
+		// wall line at all (then both ways count).
+		private static bool WayThrough(Map map, Sim sim, IntVec3 door, IntVec3 d)
+		{
+			IntVec3 across = d.x != 0 ? IntVec3.North : IntVec3.East;
+			IntVec3 along = d.x != 0 ? IntVec3.East : IntVec3.North;
+			bool inLineAcross = SideBounds(map, sim, door + across) && SideBounds(map, sim, door - across);
+			bool inLineAlong = SideBounds(map, sim, door + along) && SideBounds(map, sim, door - along);
+			return inLineAcross || !inLineAlong;
+		}
+
+		private static bool SideBounds(Map map, Sim sim, IntVec3 c)
+		{
+			return c.InBounds(map) && sim.Bounds(c);
 		}
 
 		// ---- the simulated base -------------------------------------------------------------------------------

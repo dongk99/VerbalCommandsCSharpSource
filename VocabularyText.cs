@@ -331,6 +331,15 @@ namespace VerbalCommands
 						yield return sides[i] + " to " + sides[j];
 					}
 				}
+				// A door that leads outside: "bedroom to outdoors" (user, 2026-10-25: "unforbid/forbid x (probably x being
+				// doors) that goes to outdoors").
+				if (FormPlanner.LeadsOutdoors(map, door))
+				{
+					foreach (string side in sides)
+					{
+						yield return side + " to outdoors";
+					}
+				}
 			}
 		}
 

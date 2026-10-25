@@ -1,0 +1,23 @@
+flowchart TD
+  why["AgentReminderScan: '[REMINDER] ...' lines in the outbox field 'reminders'<br/>6-hour batch (15000 ticks), 3-hour grow lines (7500), daily door lines, 12-hour room list<br/>CHANGED 2026-10-16: many lines moved to the hourly check (AgentHourlyCheck.cs)"]
+  six["Scan(): 6-hour batch, each home map:<br/>stone chunks, resources, heater, stonecutter, weapons, micro leftovers<br/>+ [TIP] drafting tip (every 6 h, no condition)"]
+  grow["GrowTick(): every 3 game hours, AgentGrowScan.Lines -> growPending"]
+  hc["AgentHourlyCheck.Tick (every game hour)"] --> hl["HourlyLines(): HarnessLog.BeginHourly, then independent scans;<br/>none reads another's result, each only appends its lines to one list (in this order)"]
+  hl --> ws["1 each home map, each work spot / bench:<br/>LightLine (less than 50% light, max 20 + 'And N more')<br/>work speed penalties (max 20 + 'And N more'), HarnessLog.Note"]
+  hl --> per["2 each home map:<br/>AgentRoomTempScan (room temp, vents), StoveLine, BulkMealLine,<br/>AgentBenchScan.WorkLines, BlueprintLine, AgentWorkChanceScan (botched builds),<br/>CarryMedicineLine, AgentDeteriorationScan, AgentRotScan"]
+  hl --> dw["3 NEW DraftLines(map) (user 2026-10-25: any drafted pawn, every hourly scan, hostiles or not):<br/>drafted spawned colonists.<br/>INDOORS (room proper, not PsychologicallyOutdoors), one line per room:<br/>'Bob and Alice are inside bedroom. However pawns wont do anything while drafted, so if you are drafting to get them<br/>cooled down on hypothermia/hyperthermia, simply disallow/forbid them from using doors inside the room so they can<br/>interact with whatever is in the room but not go out.' (user's text; 'is' for one pawn, 'are' for several)<br/>OUTDOORS, same cell as at the last hourly scan, one line:<br/>'Bob and Alice are drafted and haven't moved from their last spot. Drafted pawns don't eat, sleep or work.'<br/>OUTDOORS, moved or newly drafted, one line:<br/>'Carol is drafted. Drafted pawns don't eat, sleep or work.'"]
+  dw --- spots["NEW lastDraftSpot: pawn -> cell at this scan (only drafted pawns kept); cleared in Reset()"]
+  hl --> fb["4 NEW ForbiddenLines(map) (user 2026-10-25):<br/>BUILDINGS: player buildings with CompForbiddable.Forbidden, every door + the others inside a room, one line:<br/>'Forbidden buildings: door12345 (door, bedroom to outdoors), bed4567 (bed, bedroom).<br/>Colonists won't use or pass them; unforbid ID. allows one again.' (max 20, then 'and N more')<br/>ITEMS: forbidden haulable items inside a room (proper, not outdoors), grouped per room, one line:<br/>'Forbidden items indoors: storeroom: steel x75, knife; kitchen: rice x20.<br/>unforbid items of THINGS in area AREA. allows them again.' (max 20 rooms, then 'and N more rooms')"]
+  hl --> hypo["5 HypothermiaLine (all home maps, one line)"]
+  ws --> lst["the hourly list"]
+  per --> lst
+  dw --> lst
+  fb --> lst
+  hypo --> lst
+  lst --> ms["AgentWorkChanceScan.MarkScanned(TicksGame)"]
+  ms --> back["return lines -> AgentHourlyCheck (empty = no check)"]
+  blk["Block(batch, title, when): title line + numbered lines, '[REMINDER] ' stripped"]
+  back -.- blk
+  class dw,spots,fb new
+  classDef new fill:#b6f2b6
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

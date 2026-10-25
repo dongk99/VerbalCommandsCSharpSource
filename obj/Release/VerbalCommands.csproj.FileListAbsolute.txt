@@ -37,3 +37,4 @@ C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\9ac5aee4-5282
 C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\68850487-64c4-4f9b-8d4b-8951aa39d0c1\scratchpad\compile_out\VerbalCommands.dll
 C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\68850487-64c4-4f9b-8d4b-8951aa39d0c1\scratchpad\build_check\VerbalCommands.dll
 C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\3c5a4180-94eb-4300-b1c5-37a8162dab6e\scratchpad\vc_out\VerbalCommands.dll
+C:\Users\dongk\AppData\Local\Temp\claude\C--Users-dongk--local-bin\89f8be33-d2f8-4b69-b689-407ae70286b3\scratchpad\vc_build\VerbalCommands.dll

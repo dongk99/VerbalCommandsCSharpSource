@@ -1,0 +1,11 @@
+flowchart TD
+  note["FormStorage.cs: only the door helpers diagrammed (lines 262-302); the rest not read yet"]
+  db["DoorsBetween(map, a, b): player doors with a room of a on one side and a room of b on the other"] --> ds
+  ds["DoorSides(map, door): the PROPER rooms on the 4 cells next to the door"]
+  lo["NEW LeadsOutdoors(map, door): one of the 4 cells next to the door is in bounds, walkable,<br/>and its room is null, not a ProperRoom, or PsychologicallyOutdoors"]
+  dto["NEW DoorsToOutdoors(map, rooms): spawned player doors that LeadsOutdoors;<br/>rooms given -> only doors whose DoorSides touch one of those rooms (rooms null -> every such door)"]
+  dto --> lo
+  dto --> ds
+  class lo,dto new
+  classDef new fill:#b6f2b6
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

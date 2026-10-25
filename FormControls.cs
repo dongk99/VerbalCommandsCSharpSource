@@ -81,7 +81,8 @@ namespace VerbalCommands
 			{
 				throw new Fault("The order did not say which " + kindWord + ".");
 			}
-			List<Room> rooms = c.Has("ROOM") ? ResolveRooms(c.map, c.Text("ROOM")) : null;
+			// ROOM may be a room name or the game's room ID ("room412"; user, 2026-10-25, for forbid / unforbid).
+			List<Room> rooms = c.Has("ROOM") ? RoomsByNameOrId(c.map, c.Text("ROOM")) : null;
 			// "at SPOT" (user 2026-10-04: one power switch out of several cuts one grid): only the building on that cell.
 			bool atSpot = c.Has("SPOT");
 			IntVec3 spot = IntVec3.Invalid;
@@ -98,9 +99,45 @@ namespace VerbalCommands
 			{
 				string n = Norm(name);
 				List<Building> found = new List<Building>();
+				// A building's game ID (Thing.ThingID, "door12345"; user, 2026-10-25: "if its buildings, print their id so its
+				// easier for models to unforbid/forbid them"): that one building.
+				string trimmed = name.Trim();
+				if (IsGameId(trimmed))
+				{
+					Building byId = c.map.listerBuildings.allBuildingsColonist.FirstOrDefault((Building b) => b.Spawned
+						&& b.Faction == Faction.OfPlayer && fits(b) && string.Equals(b.ThingID, trimmed, StringComparison.OrdinalIgnoreCase));
+					if (byId == null)
+					{
+						throw new Fault("There is no building with the ID " + trimmed + " on the map that can be changed that way.");
+					}
+					if (!result.Contains(byId))
+					{
+						result.Add(byId);
+					}
+					continue;
+				}
 				// A door as the "doors" vocabulary line writes it: "storeroom to kitchen".
 				int split = name.IndexOf(" to ", StringComparison.OrdinalIgnoreCase);
-				if (split > 0)
+				// Doors that lead outside (user, 2026-10-25): "bedroom to outdoors" (that room's), "doors to outdoors" (every
+				// one; "in ROOM" narrows it to that room's).
+				if (split > 0 && IsOutdoorsWord(name.Substring(split + 4)))
+				{
+					string side = name.Substring(0, split).Trim();
+					List<Room> sideRooms = IsDoorsWord(side) ? rooms : OneOutdoorSide(c, side, (string id) =>
+						(c.form == "unforbid" ? "unforbid " : "forbid ") + id + " to outdoors" + (c.Has("ROOM") ? " in " + c.Text("ROOM") : "") + ".");
+					foreach (Building_Door door in DoorsToOutdoors(c.map, sideRooms))
+					{
+						if (door.Faction == Faction.OfPlayer && fits(door) && (rooms == null || DoorSides(c.map, door).Any((Room r) => rooms.Contains(r))))
+						{
+							found.Add(door);
+						}
+					}
+					if (found.Count == 0)
+					{
+						throw new Fault("There is no door from " + (IsDoorsWord(side) ? (c.Has("ROOM") ? "the " + c.Text("ROOM") : "the colony") : "the " + side) + " to the outdoors.");
+					}
+				}
+				else if (split > 0)
 				{
 					List<Room> sideA = StorageIndex.FindRoomsByLabel(c.map, name.Substring(0, split).Trim());
 					List<Room> sideB = StorageIndex.FindRoomsByLabel(c.map, name.Substring(split + 4).Trim());
@@ -155,6 +192,39 @@ namespace VerbalCommands
 				}
 			}
 			return result;
+		}
+
+		// A game ID is one word: letters (the defName) then its number ("door12345", "Bed4567"), as Thing.ThingID writes it.
+		private static bool IsGameId(string text)
+		{
+			return System.Text.RegularExpressions.Regex.IsMatch(text ?? "", "^[A-Za-z_]+[0-9]+$");
+		}
+
+		// The ROOM of "ROOM to outdoors": a room name or ID. A name that several rooms have changes nothing (user, 2026-10-25:
+		// "If it detects more than 1 room that can match the order, then list all of the roomID for the agent with [error]
+		// tag instead, with proper sentence order."): every room ID, and the agent's own sentence for each.
+		private static List<Room> OneOutdoorSide(FormContext c, string side, Func<string, string> sentenceFor)
+		{
+			List<Room> rooms = RoomsByNameOrId(c.map, side);
+			if (rooms.Count > 1)
+			{
+				throw new Fault("[error] " + rooms.Count + " rooms are named " + side + ": "
+					+ string.Join(", ", rooms.Select((Room r) => "Room" + r.ID).ToArray()) + ". Say which one: "
+					+ string.Join(" / ", rooms.Select((Room r) => sentenceFor("room" + r.ID)).ToArray()));
+			}
+			return rooms;
+		}
+
+		private static bool IsOutdoorsWord(string text)
+		{
+			string t = (text ?? "").Trim();
+			return string.Equals(t, "outdoors", StringComparison.OrdinalIgnoreCase) || string.Equals(t, "the outdoors", StringComparison.OrdinalIgnoreCase);
+		}
+
+		private static bool IsDoorsWord(string text)
+		{
+			string t = (text ?? "").Trim();
+			return string.Equals(t, "doors", StringComparison.OrdinalIgnoreCase) || string.Equals(t, "door", StringComparison.OrdinalIgnoreCase);
 		}
 
 		// "standing lamp (3)" for several of one kind.
@@ -357,7 +427,17 @@ namespace VerbalCommands
 			}
 			List<Building_Door> doors;
 			int split = text.IndexOf(" to ", StringComparison.OrdinalIgnoreCase);
-			if (split > 0)
+			// "bedroom to outdoors" (the doors line, user 2026-10-25): that room's doors that lead outside.
+			if (split > 0 && IsOutdoorsWord(text.Substring(split + 4)))
+			{
+				doors = DoorsToOutdoors(c.map, OneOutdoorSide(c, text.Substring(0, split).Trim(), (string id) =>
+					hold ? "hold door " + id + " to outdoors open." : "let door " + id + " to outdoors close."));
+				if (doors.Count == 0)
+				{
+					throw new Fault("There is no door from the " + text.Substring(0, split).Trim() + " to the outdoors.");
+				}
+			}
+			else if (split > 0)
 			{
 				List<Room> a = ResolveRooms(c.map, text.Substring(0, split).Trim());
 				List<Room> b = ResolveRooms(c.map, text.Substring(split + 4).Trim());

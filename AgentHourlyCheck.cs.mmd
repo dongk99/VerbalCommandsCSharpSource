@@ -1,0 +1,23 @@
+flowchart TD
+  why["why (user, 2026-10-16): '... fires EVERY ONE HOUR. BATCHED. AND PAUSES THE GAME ...'<br/>voter = orchestrator alone (user, 2026-10-19)"]
+  tick["Tick() from AgentReminderScan.Tick (game ticks)"] --> slot{"slot = TicksGame / 2500<br/>first call after load?"}
+  slot -- yes --> mark["lastSlot = slot; AgentWorkChanceScan.MarkScanned; return"]
+  slot -- no --> same{"slot == lastSlot?"}
+  same -- yes --> ret1["return"]
+  same -- no --> scan["lastSlot = slot<br/>FormPlanner.WriteBillsFile (bills.md)<br/>batch = AgentReminderScan.HourlyLines()<br/>found = HarnessLog.TakeHourly(); when = ScanTime()"]
+  scan --> empty{"batch empty?"}
+  empty -- yes --> ret2["return (nothing opens)"]
+  empty -- no --> openN["Open(batch, when): seq = NextSeq (above every votes\\N folder)<br/>voters = [orchestrator]; open = true<br/>AgentReminderLog.Scan; AgentTime.RequestPause(PauseLine); TickManager.Pause"]
+  openN --> hlog["HarnessLog.AddHourly(seq, found)"]
+  upd["Update() from AgentInbox.Poll (frames, paused too)"] --> isopen{"open?"}
+  isopen -- no --> ret3["return"]
+  isopen -- yes --> votes["read SaveData\\VerbalCommands\\votes\\seq\\*.txt (written by vote.ps1)"]
+  votes --> all{"every voter voted?"}
+  all -- yes --> close["open = false; if paused: speed Normal (1x)"]
+  all -- no --> ret4["stay open"]
+  state["StateField(): inbox_state.json 'hourly' = seq, text (BatchText), pause_line, voters, waiting_for<br/>null when closed; StateKey changes on open / close / vote"]
+  texts["BatchText: '[REMINDER] Hourly check N (date), K reminders:' + numbered lines<br/>PauseLine: 'Hourly check N: K reminders. Read them, then vote: vote.ps1 -Name NAME -Check N'<br/>RefusalText: 'Hourly check N is waiting for the orchestrator's vote.'"]
+  openN -.- state
+  state -.- texts
+  classDef new fill:#b6f2b6
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

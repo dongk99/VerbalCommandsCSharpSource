@@ -1,0 +1,39 @@
+flowchart TD
+  note["FormControls.cs: the forbid part (lines 50-52, 67-173, 396-407) and the door hold part (351-394)"]
+  sw["form switch (line 50): 'forbid' / 'unforbid'"] --> pf["PlanForbid(c, forbid)"]
+  pf --> rt["ResolveTargets (lines 67-158): buildings that have CompForbiddable ('buildings or doors')"]
+  rt --> those{"'those' (buildings an earlier sentence of this order changed)?"}
+  those -- yes --> bp
+  those -- no --> rooms["ROOM given -> RoomStats.RoomsByNameOrId: a room name OR a room ID ('room412')<br/>(was FormPlanner.ResolveRooms: names only)"]
+  rooms --> each["each TARGETS name"]
+  each --> idm["NEW name shaped like a game ID (letters then digits, 'door12345'):<br/>the player building whose Thing.ThingID equals it (ignore case) and fits;<br/>none -> Fault 'There is no building with the ID ... on the map.'"]
+  each --> allout["NEW 'doors to outdoors': FormStorage.DoorsToOutdoors(map, rooms or null)<br/>(every door that leads outside; 'in ROOM' narrows to that room's doors)"]
+  each --> dr["'ROOM_A to ROOM_B': the door(s) between those rooms"]
+  dr --> out1["NEW ROOM_B (or ROOM_A) is 'outdoors': FormStorage.DoorsToOutdoors(map, the other side's rooms)"]
+  each --> lb["every player building whose label = the name<br/>(ALL of that label on the map; 'in ROOM' narrows to that room)"]
+  each --> sp["'at SPOT': only the building on that cell (code already there; the router form is new)"]
+  items["items lying on the map: separate forms (router.txt:459-473)<br/>'forbid items of THINGS in area AREA.' / near SPOT: by kind + area, not one item"]
+  idm --> bp
+  allout --> bp
+  dr --> bp
+  out1 --> bp
+  lb --> bp
+  sp --> bp
+  pf -.- items
+  bp["BuildingPlan: per building, write = CompForbiddable.Forbidden = forbid<br/>(the same flag the F 'Allow' gizmo toggles, CompForbiddable.cs:111-143)"]
+  bp --> rep["reply line: 'Forbid ' / 'Allow ' + DescribeBuildings + WhereText + '.'"]
+  hold["PlanDoorHold (351-394): DOOR 'A to B' -> DoorsBetween; DOOR 'ROOM' -> doors touching that room;<br/>'hold open' / 'let close' via the CommandToggleDoorHoldOpen gizmo (Y)"]
+  hold --> hout["NEW DOOR 'ROOM to outdoors': FormStorage.DoorsToOutdoors(map, ROOM's rooms)"]
+  router["NEW router (router_lab\\parse_results.txt -> assemble_router.ps1 -> mod\\Router\\router.txt):<br/>forms 'forbid TARGETS at SPOT.' / 'unforbid TARGETS at SPOT.' (SPOT a cell, read_spot);<br/>forbid/unforbid join ROOM_ID_FORMS (room412); a TARGETS item passes when it is a game ID shape<br/>or 'doors to outdoors' (the mod then finds it or says it isn't there); help() lines updated"]
+  router -.- sw
+  facts["BEFORE the [error] change below (2026-10-25), room IDs and same-name rooms:<br/>forbid ... in room412: YES (router ROOM_ID_FORMS + RoomsByNameOrId)<br/>forbid room412 to outdoors: NO, the router refuses it (TARGETS must be on the doors line, which has names only)<br/>hold door room412 to outdoors open: NO, the router refuses it (DOOR must be on the doors line); PlanDoorHold also uses ResolveRooms (names only)<br/>several rooms with the same name ('hold door bedroom to outdoors open.'): ResolveRooms returns EVERY room of that name,<br/>so the outside doors of ALL of them are held open; no question is asked. 'forbid bedroom to outdoors.' does the same"]
+  hout -.- facts
+  amb["NEW (user 2026-10-25: 'If it detects more than 1 room that can match the order, then list all of the roomID for the agent<br/>with [error] tag instead, with proper sentence order'): 'ROOM to outdoors' in forbid / unforbid / hold door / let door:<br/>ROOM by name matches 2+ rooms -> nothing is changed; Fault:<br/>'[error] 2 rooms are named bedroom: Room412, Room415. Say which one: forbid room412 to outdoors. / forbid room415 to outdoors.'<br/>(the sentence is the agent's own form: unforbid ..., hold door room412 to outdoors open., let door room412 to outdoors close.)"]
+  idside["NEW 'room412 to outdoors': the side may be a room ID (RoomsByNameOrId) in forbid / unforbid AND hold / let door<br/>router: forbid_target and the door check also pass '^room[0-9]+ to outdoors$'"]
+  out1 --> amb
+  hout --> amb
+  amb --- idside
+  class amb,idside new
+  class rooms,idm,allout,out1,hout,router new
+  classDef new fill:#b6f2b6
+  classDef removed fill:#f7b6b6,stroke-dasharray:6 4

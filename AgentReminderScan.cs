@@ -86,6 +86,7 @@ namespace VerbalCommands
 			bleedPending = new List<Pawn>();
 			merchantSeen.Clear();
 			merchantPending = new List<Pawn>();
+			lastDraftSpot = new Dictionary<Pawn, IntVec3>();
 			lastGrowSlot = int.MinValue;
 			growPending = new List<string>();
 			growScannedAt = "";
@@ -563,6 +564,7 @@ namespace VerbalCommands
 			{
 				lines.Add("[REMINDER] And " + moreDark + " more work spots or benches with less than 50% light at their interaction spot.");
 			}
+			Dictionary<Pawn, IntVec3> draftSpots = new Dictionary<Pawn, IntVec3>();
 			foreach (Map map in Find.Maps)
 			{
 				if (map != null && map.IsPlayerHome)
@@ -593,8 +595,12 @@ namespace VerbalCommands
 					lines.AddRange(AgentDeteriorationScan.Lines(map));
 					// Rotting food, indoors by room and outdoors by 10x10 square (AgentRotScan.cs; user, 2026-10-17).
 					lines.AddRange(AgentRotScan.Lines(map));
+					// Drafted pawns and forbidden buildings / items (user, 2026-10-25; DraftLines, ForbiddenLines below).
+					lines.AddRange(DraftLines(map, draftSpots));
+					lines.AddRange(ForbiddenLines(map));
 				}
 			}
+			lastDraftSpot = draftSpots;
 			string hypothermia = HypothermiaLine();
 			if (hypothermia != null)
 			{
@@ -602,6 +608,172 @@ namespace VerbalCommands
 			}
 			AgentWorkChanceScan.MarkScanned(Find.TickManager.TicksGame);   // botched builds count from this scan on
 			return lines;
+		}
+
+		// ---- drafted pawns (user, 2026-10-25) ------------------------------------------------------------------------
+		// "set up some sort of draft-watch so it goes into agent's 1hr reminder if a pawn is drafted & sitting there"; the
+		// user's picks: any drafted pawn at every hourly scan, hostiles on the map or not, pawns that have not moved said
+		// together without cells ("bob and alice hasnt moved from last spot"), the short line + why. Indoors, the user's
+		// own text (2026-10-25: "the agents may have intentionally drafted pawns so they can put pawns in safe places (e.g.
+		// indoors)"), one line per room.
+		private static Dictionary<Pawn, IntVec3> lastDraftSpot = new Dictionary<Pawn, IntVec3>();
+
+		private static List<string> DraftLines(Map map, Dictionary<Pawn, IntVec3> now)
+		{
+			List<string> lines = new List<string>();
+			List<Pawn> drafted = map.mapPawns.FreeColonistsSpawned.Where((Pawn p) => p.Drafted).ToList();
+			foreach (IGrouping<Room, Pawn> group in drafted.Where((Pawn p) => IsIndoors(p.GetRoom())).GroupBy((Pawn p) => p.GetRoom()))
+			{
+				List<Pawn> pawns = group.ToList();
+				lines.Add("[REMINDER] " + PawnNames(pawns) + (pawns.Count == 1 ? " is" : " are") + " inside " + (VocabularyText.RoomLabel(group.Key) ?? "a room")
+					+ ". However pawns wont do anything while drafted, so if you are drafting to get them cooled down on hypothermia/hyperthermia,"
+					+ " simply disallow/forbid them from using doors inside the room so they can interact with whatever is in the room but not go out.");
+			}
+			List<Pawn> still = new List<Pawn>();
+			List<Pawn> moved = new List<Pawn>();
+			foreach (Pawn p in drafted)
+			{
+				now[p] = p.Position;
+				if (IsIndoors(p.GetRoom()))
+				{
+					continue;
+				}
+				IntVec3 before;
+				if (lastDraftSpot.TryGetValue(p, out before) && before == p.Position)
+				{
+					still.Add(p);
+				}
+				else
+				{
+					moved.Add(p);
+				}
+			}
+			if (still.Count > 0)
+			{
+				lines.Add("[REMINDER] " + PawnNames(still) + (still.Count == 1 ? " is drafted and hasn't" : " are drafted and haven't")
+					+ " moved from their last spot. Drafted pawns don't eat, sleep or work.");
+			}
+			if (moved.Count > 0)
+			{
+				lines.Add("[REMINDER] " + PawnNames(moved) + (moved.Count == 1 ? " is" : " are") + " drafted. Drafted pawns don't eat, sleep or work.");
+			}
+			return lines;
+		}
+
+		// ---- forbidden buildings and items (user, 2026-10-25) ----------------------------------------------------------
+		// "I would write a general code that scans for forbidden buildings/items indoors and say what they are, and if its
+		// buildings, print their id so its easier for models to unforbid/forbid them" / "so they dont forget to unforbid
+		// them and wonder why their pawns arent doing anything". The user's picks: every forbidden door (doors sit between
+		// rooms) and the other buildings inside a room; items inside a room, per room, kinds and counts.
+		private static List<string> ForbiddenLines(Map map)
+		{
+			List<string> lines = new List<string>();
+			List<string> buildings = new List<string>();
+			int moreBuildings = 0;
+			foreach (Building b in map.listerBuildings.allBuildingsColonist)
+			{
+				CompForbiddable comp = b.Spawned ? b.GetComp<CompForbiddable>() : null;
+				if (comp == null || !comp.Forbidden)
+				{
+					continue;
+				}
+				Building_Door door = b as Building_Door;
+				string where;
+				if (door != null)
+				{
+					where = DoorName(map, door);
+				}
+				else
+				{
+					Room room = FormPlanner.RoomOfThing(b);
+					if (!IsIndoors(room))
+					{
+						continue;
+					}
+					where = VocabularyText.RoomLabel(room) ?? "";
+				}
+				if (buildings.Count >= MaxLines)
+				{
+					moreBuildings++;
+					continue;
+				}
+				buildings.Add(b.ThingID + " (" + b.def.label + (where != "" ? ", " + where : "") + ")");
+			}
+			if (buildings.Count > 0)
+			{
+				lines.Add("[REMINDER] Forbidden buildings: " + string.Join(", ", buildings.ToArray()) + (moreBuildings > 0 ? " and " + moreBuildings + " more" : "")
+					+ ". Colonists won't use or pass them; unforbid ID. allows one again.");
+			}
+
+			List<Room> roomOrder = new List<Room>();
+			Dictionary<Room, Dictionary<string, int>> byRoom = new Dictionary<Room, Dictionary<string, int>>();
+			foreach (Thing t in map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver))
+			{
+				if (!t.Spawned || !t.IsForbidden(Faction.OfPlayer))
+				{
+					continue;
+				}
+				Room room = t.GetRoom();
+				if (!IsIndoors(room))
+				{
+					continue;
+				}
+				Dictionary<string, int> kinds;
+				if (!byRoom.TryGetValue(room, out kinds))
+				{
+					kinds = new Dictionary<string, int>();
+					byRoom[room] = kinds;
+					roomOrder.Add(room);
+				}
+				int had;
+				kinds.TryGetValue(t.def.label, out had);
+				kinds[t.def.label] = had + t.stackCount;
+			}
+			if (roomOrder.Count > 0)
+			{
+				List<string> rooms = new List<string>();
+				foreach (Room room in roomOrder.Take(MaxLines))
+				{
+					rooms.Add((VocabularyText.RoomLabel(room) ?? "a room") + ": "
+						+ string.Join(", ", byRoom[room].Select((KeyValuePair<string, int> k) => k.Value > 1 ? k.Key + " x" + k.Value : k.Key).ToArray()));
+				}
+				int moreRooms = roomOrder.Count - rooms.Count;
+				lines.Add("[REMINDER] Forbidden items indoors: " + string.Join("; ", rooms.ToArray()) + (moreRooms > 0 ? " and " + moreRooms + " more rooms" : "")
+					+ ". unforbid items of THINGS in area AREA. allows them again.");
+			}
+			return lines;
+		}
+
+		// A proper room that is not open air.
+		private static bool IsIndoors(Room room)
+		{
+			return room != null && room.ProperRoom && !room.PsychologicallyOutdoors;
+		}
+
+		// "bedroom to outdoors", "kitchen to dining room": the door as the "doors" vocabulary line names it.
+		private static string DoorName(Map map, Building_Door door)
+		{
+			List<string> sides = FormPlanner.DoorSides(map, door)
+				.Select((Room r) => VocabularyText.RoomLabel(r))
+				.Where((string s) => !string.IsNullOrEmpty(s))
+				.Distinct()
+				.ToList();
+			if (FormPlanner.LeadsOutdoors(map, door))
+			{
+				sides.Add("outdoors");
+			}
+			return string.Join(" to ", sides.ToArray());
+		}
+
+		// "Bob", "Bob and Alice", "Bob, Alice and Carol".
+		private static string PawnNames(List<Pawn> pawns)
+		{
+			List<string> names = pawns.Select((Pawn p) => p.LabelShort).ToList();
+			if (names.Count <= 1)
+			{
+				return names.Count == 1 ? names[0] : "";
+			}
+			return string.Join(", ", names.Take(names.Count - 1).ToArray()) + " and " + names[names.Count - 1];
 		}
 
 		// Hypothermia (user, 2026-10-16, notes\hypothermia_practical.md: "maybe just list of pawns with hypothermia + severity."
