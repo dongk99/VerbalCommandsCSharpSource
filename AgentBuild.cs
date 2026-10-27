@@ -190,7 +190,11 @@ namespace VerbalCommands
 			Dictionary<ThingDef, int> needed = new Dictionary<ThingDef, int>();
 			BuildDefs.AddCosts(needed, def, stuff, 1);
 			AddMaterialNotes(plan, map, needed);
-			plan.notes.Add("Chosen: the free steam geyser nearest the colonists, of " + geysers.Count + " in view. For another one say 'build " + label + " at X, Z.' with its cell ('where are steam geysers.').");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. The geyser choice itself is unchanged.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				plan.notes.Add("Chosen: the free steam geyser nearest the colonists, of " + geysers.Count + " in view. For another one say 'build " + label + " at X, Z.' with its cell ('where are steam geysers.').");
+			}
 			string line = "Build " + label + StuffPart(stuff) + " on the steam geyser at " + AgentPlace.Describe(map, cell) + ".";
 			AgentWindCheck.Note(plan, map, def, cell, rot);
 			AgentLightCheck.Note(plan, map, def, cell, rot);

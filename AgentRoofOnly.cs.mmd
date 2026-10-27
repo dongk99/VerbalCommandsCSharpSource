@@ -1,0 +1,7 @@
+flowchart TB
+  ro["roof-only order (build roof at AREA using PAWN)"] --> g{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  g -- yes --> n["plan notes (added ~146, ~150): 'Construction is turned on for PAWN until it is done.' (~47);<br/>'N of those cells have no wall or column within 6 tiles yet; they get roofed once one stands.' (~52)"]
+  g -- no --> x["NEW 2026-10-26: those notes not added"]
+  tm["TakeMessages: roofing done messages into reminders (AgentInbox ~861): unchanged"]
+  class g,x new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

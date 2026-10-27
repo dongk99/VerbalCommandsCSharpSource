@@ -1,0 +1,7 @@
+flowchart TB
+  rl["ReminderLine(map) ~109-117: '[REMINDER] You have N stone chunk(s) indoors ...' (text ~29-34)<br/>called from AgentReminderScan.Scan, gated there by BaseRemindersOn"]
+  mv["move chunks plan: haul the chunks inside rooms to a stockpile"] --> g{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn?"}
+  g -- yes --> ac["plan.askConfirm = true (~146): waits for apply or cancel"]
+  g -- no --> na["NEW 2026-10-26: no askConfirm: the plan follows the normal confirm setting"]
+  class g,na new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

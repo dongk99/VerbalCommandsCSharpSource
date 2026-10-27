@@ -104,11 +104,21 @@ namespace VerbalCommands
 
 		internal static void Note(Plan plan, Map map, ThingDef def, IntVec3 cell, Rot4 rot)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			Note(plan, map, new List<Placed> { new Placed(def, cell, rot) });
 		}
 
 		internal static void Note(Plan plan, Map map, ThingDef def, IEnumerable<IntVec3> cells, Rot4 rot)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			List<Placed> list = new List<Placed>();
 			foreach (IntVec3 c in cells)
 			{
@@ -119,6 +129,11 @@ namespace VerbalCommands
 
 		internal static void Note(Plan plan, Map map, List<Placed> placed)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			try
 			{
 				if (plan == null || map == null || placed == null || placed.Count == 0)
@@ -236,6 +251,11 @@ namespace VerbalCommands
 		// Roof marks (build roof area): a roofed path cell counts the same as a wall (CompPowerPlantWind.cs:221-225).
 		internal static void NoteRoof(Plan plan, Map map, List<IntVec3> cells)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			try
 			{
 				if (plan == null || map == null || cells == null || cells.Count == 0)

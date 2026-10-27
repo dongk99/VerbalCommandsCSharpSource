@@ -122,11 +122,21 @@ namespace VerbalCommands
 
 		internal static void Note(Plan plan, Map map, ThingDef def, IntVec3 cell, Rot4 rot)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			Note(plan, map, new List<AgentWindCheck.Placed> { new AgentWindCheck.Placed(def, cell, rot) });
 		}
 
 		internal static void Note(Plan plan, Map map, ThingDef def, IEnumerable<IntVec3> cells, Rot4 rot)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			List<AgentWindCheck.Placed> list = new List<AgentWindCheck.Placed>();
 			foreach (IntVec3 c in cells)
 			{
@@ -137,6 +147,11 @@ namespace VerbalCommands
 
 		internal static void Note(Plan plan, Map map, List<AgentWindCheck.Placed> placed)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			try
 			{
 				if (plan == null || map == null || placed == null || placed.Count == 0)
@@ -350,6 +365,11 @@ namespace VerbalCommands
 		// Build-roof marks: a roofed growing cell with no sun lamp over it loses the sun.
 		internal static void NoteRoof(Plan plan, Map map, List<IntVec3> cells)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			try
 			{
 				if (plan == null || map == null || cells == null || cells.Count == 0)

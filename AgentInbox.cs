@@ -927,7 +927,10 @@ namespace VerbalCommands
 			// rewrites the file too, and the file carries the last events, so a watcher outside the game
 			// (the rimworld-play skill's watch.ps1, armed with the agent's Monitor tool) can hand each new one to the agent.
 			int lastEventSeq = AgentEvents.LastSeq;
-			string key = string.Join("|", new string[] { job != null ? "busy" : "idle", currentFile ?? "", waiting, question ?? "", paused ? "p" : "r", speed ?? "", meter.ToString(Formatting.None), lastEventSeq.ToString(), AgentHourlyCheck.StateKey() });
+			// Settings gate (user, 2026-10-26): the per-category gates are part of the change key, so ticking one in the settings
+			// window rewrites the file at the next poll (the same check as the rest; no timer).
+			JObject gates = GatesField();
+			string key = string.Join("|", new string[] { job != null ? "busy" : "idle", currentFile ?? "", waiting, question ?? "", paused ? "p" : "r", speed ?? "", meter.ToString(Formatting.None), lastEventSeq.ToString(), AgentHourlyCheck.StateKey(), gates.ToString(Formatting.None) });
 			if (key == lastStateKey)
 			{
 				return;
@@ -951,8 +954,27 @@ namespace VerbalCommands
 			o["events"] = RecentEvents(lastEventSeq);
 			// The open hourly check, for watch.ps1 (orchestrator) and wait_round.ps1 (specialists); null when none.
 			o["hourly"] = AgentHourlyCheck.StateField();
+			// Settings gate (user, 2026-10-26): the on/off gates, for the scripts outside the game (pawns_watch.ps1 and
+			// rimworld_skill_hint.py read gates.tips; a missing "gates" or "tips" counts as on there).
+			o["gates"] = gates;
 			o["utc"] = DateTime.UtcNow.ToString("o");
 			WriteJsonAtomic(statePath, o);
+		}
+
+		// Settings gate (user, 2026-10-26): the eight VerbalCommandsMod gates as bool members, tips, base, food, pawn,
+		// resource, urgent, placement, advice (the settings window's last section).
+		private static JObject GatesField()
+		{
+			JObject g = new JObject();
+			g["tips"] = VerbalCommandsMod.TipsOn;
+			g["base"] = VerbalCommandsMod.BaseRemindersOn;
+			g["food"] = VerbalCommandsMod.FoodRemindersOn;
+			g["pawn"] = VerbalCommandsMod.PawnRemindersOn;
+			g["resource"] = VerbalCommandsMod.ResourceRemindersOn;
+			g["urgent"] = VerbalCommandsMod.UrgentRemindersOn;
+			g["placement"] = VerbalCommandsMod.PlacementChecksOn;
+			g["advice"] = VerbalCommandsMod.BuildAdviceOn;
+			return g;
 		}
 
 		// The newest events (at most StateEvents), oldest first: seq, when, kind, text. A watcher keeps the last seq it

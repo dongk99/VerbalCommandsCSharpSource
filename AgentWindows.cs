@@ -435,7 +435,8 @@ namespace VerbalCommands
 			}
 			string label = pick.label;
 			Plan plan = FormPlanner.NewPlan("agent window close");
-			if (pick.risky)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. The RISKY line below stays.
+			if (pick.risky && VerbalCommandsMod.BuildAdviceOn)
 			{
 				plan.notes.Add("The words of this choice say it gives something up or can not be taken back; read them before you apply.");
 			}

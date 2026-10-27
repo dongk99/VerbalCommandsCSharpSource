@@ -1,0 +1,7 @@
+flowchart TB
+  ch["letter / window choice order"] --> g{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  g -- yes --> n["note (~440): 'The words of this choice say it gives something up or can not be taken back;<br/>read them before you apply.'"]
+  g -- no --> x["NEW 2026-10-26: note not added"]
+  r["RISKY line (~458): unchanged"]
+  class g,x new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

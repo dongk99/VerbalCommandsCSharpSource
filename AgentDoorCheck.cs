@@ -40,22 +40,42 @@ namespace VerbalCommands
 
 		internal static void Note(Plan plan, Map map, ThingDef def, IntVec3 cell, Rot4 rot)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			Note(plan, map, new List<AgentWindCheck.Placed> { new AgentWindCheck.Placed(def, cell, rot) }, null);
 		}
 
 		internal static void Note(Plan plan, Map map, ThingDef def, IEnumerable<IntVec3> cells, Rot4 rot)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			Note(plan, map, cells.Select((IntVec3 c) => new AgentWindCheck.Placed(def, c, rot)).ToList(), null);
 		}
 
 		internal static void Note(Plan plan, Map map, List<AgentWindCheck.Placed> placed)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			Note(plan, map, placed, null);
 		}
 
 		// The room forms (build room new, dig room, furnished room): walls, the door, and the cells mined open.
 		internal static void NoteShell(Plan plan, Map map, RoomShell shell)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			// A room without a door still goes in: its walls can block an existing door (blocked-door check, 2026-10-25).
 			if (shell == null || shell.wallCells == null)
 			{
@@ -87,6 +107,11 @@ namespace VerbalCommands
 
 		private static void Note(Plan plan, Map map, List<AgentWindCheck.Placed> placed, HashSet<IntVec3> open)
 		{
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (!VerbalCommandsMod.PlacementChecksOn)
+			{
+				return;
+			}
 			try
 			{
 				if (plan == null || map == null || placed == null)

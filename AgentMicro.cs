@@ -403,6 +403,9 @@ namespace VerbalCommands
 			Plan plan = FormPlanner.NewPlan(c.form);
 			List<MicroPawn> going = new List<MicroPawn>();
 			List<string> parts = new List<string>();
+			// Why a pawn was left out (the skill block line, "was left out"). Sent as plan notes only while Build advice is on
+			// (Settings gate, user, 2026-10-26); the first one is still the Fault text when nobody goes.
+			List<string> leftOut = new List<string>();
 			HashSet<IntVec3> taken = new HashSet<IntVec3>();
 			List<IntVec3> tiles = haul ? null : Candidates(map, site.region, first, kinds);
 			foreach (Pawn p in named)
@@ -411,7 +414,7 @@ namespace VerbalCommands
 				string red = haul ? null : SkillBlock.Check(p, WorkTypeDefOf.Mining);
 				if (red != null)
 				{
-					plan.notes.Add(red);
+					leftOut.Add(red);
 					continue;
 				}
 				string why = p.Map != map ? p.LabelShort + " is not on this map." : WhyNot(p, haul);
@@ -435,7 +438,7 @@ namespace VerbalCommands
 				}
 				if (why != null)
 				{
-					plan.notes.Add(why + " " + p.LabelShort + " was left out.");
+					leftOut.Add(why + " " + p.LabelShort + " was left out.");
 					continue;
 				}
 				MicroPawn mp = new MicroPawn();
@@ -459,9 +462,16 @@ namespace VerbalCommands
 			}
 			if (going.Count == 0)
 			{
-				throw new Fault(plan.notes.Count > 0 ? plan.notes[0] : "Nobody to send.");
+				throw new Fault(leftOut.Count > 0 ? leftOut[0] : "Nobody to send.");
 			}
-			if (HostilesOnMap(map))
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. Off: the skill block line and the "was left out" lines
+			// are not sent with the plan (the Fault above still gives the first one).
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				plan.notes.AddRange(leftOut);
+			}
+			// Settings gate (user, 2026-10-26): Building placement checks. Off: no hostiles note and no confirm.
+			if (VerbalCommandsMod.PlacementChecksOn && HostilesOnMap(map))
 			{
 				plan.notes.Add(HostileNote);
 				plan.askConfirm = true;

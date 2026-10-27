@@ -15,3 +15,8 @@ flowchart TB
   out -- ok --> build["Build -> ApplyAll ~1597 (skips cells no longer Visible, 1613)"]
   note["Router (router.txt:424-430): every 'mine ...' sentence now goes to AgentMicro ('micro mine');<br/>no mine sentence only marks any more"]
   p -.-> note
+  build --> wg{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  wg -- yes --> wn["slaughter / venerated (~1256-1311), hunt (~1323-1367), tame (~1370-1422) warnings into RISKY text or notes;<br/>deconstruct own buildings RISKY text (~1467-1474); unripe harvest note (~1506, ~1523-1544)"]
+  wg -- no --> wx["NEW 2026-10-26: none of these added (no RISKY from them, no notes); the designations are unchanged"]
+  class wg,wx new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

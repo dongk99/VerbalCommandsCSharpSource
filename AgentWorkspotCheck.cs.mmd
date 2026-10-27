@@ -1,0 +1,9 @@
+flowchart TB
+  n["Note(plan, map, placed) ~91: a work table or research bench in the plan"] --> g{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn?"}
+  g -- no --> r["NEW 2026-10-26: return: no WORKSPOT note, no askConfirm"]
+  g -- yes --> w["WORKSPOT note ~111-122: the Reminder text (~51-56) + this order's benches with their penalties"]
+  w --> c["plan.askConfirm = true, confirmBy 'Work spot check' (~124-125)"]
+  p["Penalties ~159, ~172-208: game factors for one bench"] --> w
+  p -.-> h["also used by the AgentReminderScan hourly work spot lines (gated there by BaseRemindersOn); not gated here"]
+  class g,r new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

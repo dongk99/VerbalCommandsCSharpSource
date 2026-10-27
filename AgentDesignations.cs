@@ -1255,6 +1255,11 @@ namespace VerbalCommands
 		// The game's slaughter warnings (SlaughterDesignatorUtility.cs:7-43), same conditions, nothing shown on screen.
 		private static void SlaughterWarnings(Ctx x, List<Cand> chosen, List<string> into)
 		{
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. Off: adds nothing (VeneratedWarning is only reached from here and HuntWarnings).
+			if (!VerbalCommandsMod.BuildAdviceOn)
+			{
+				return;
+			}
 			HashSet<PawnKindDef> venerated = new HashSet<PawnKindDef>();
 			foreach (Cand cd in chosen)
 			{
@@ -1322,6 +1327,11 @@ namespace VerbalCommands
 		// manhunterOnDamageChance (line 102 and 104); the message prints PawnUtility.GetManhunterOnDamageChance(pawn).
 		private static void HuntWarnings(Ctx x, List<Cand> chosen, List<string> risk, List<string> notes)
 		{
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. Off: adds nothing to risk or notes (so the order is not marked RISKY by this).
+			if (!VerbalCommandsMod.BuildAdviceOn)
+			{
+				return;
+			}
 			bool anyAssigned = false;
 			bool anyProper = false;
 			foreach (Pawn colonist in x.map.mapPawns.FreeColonistsSpawned)
@@ -1369,6 +1379,11 @@ namespace VerbalCommands
 		// TameUtility.cs:11-45, per kind (the game warns for the first pawn of each kind).
 		private static void TameWarnings(Ctx x, List<Cand> chosen, List<string> notes)
 		{
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. Off: adds nothing to notes.
+			if (!VerbalCommandsMod.BuildAdviceOn)
+			{
+				return;
+			}
 			HashSet<PawnKindDef> seen = new HashSet<PawnKindDef>();
 			foreach (Cand cd in chosen)
 			{
@@ -1465,7 +1480,8 @@ namespace VerbalCommands
 				{
 					core = verbCap + " " + what + " " + where + ".";
 					int own = chosen.Count((Cand cd) => cd.thing != null && cd.thing.Faction == Faction.OfPlayer);
-					if (own > 0)
+					// Settings gate (user, 2026-10-26): Build advice tips/notes. Off: no RISKY mark and no own-buildings text.
+					if (own > 0 && VerbalCommandsMod.BuildAdviceOn)
 					{
 						risky = true;
 						riskText.Add(own == chosen.Count
@@ -1500,7 +1516,8 @@ namespace VerbalCommands
 				ApplyAll(x, targets, what, label);
 			};
 			plan.writes.Add(write.Reads(() => ReadLine(x, targets, what)));
-			string unripe = UnripeNote(x, chosen);
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. Off: no unripe harvest note.
+			string unripe = VerbalCommandsMod.BuildAdviceOn ? UnripeNote(x, chosen) : null;
 			if (unripe != null)
 			{
 				plan.notes.Add(unripe);

@@ -146,13 +146,17 @@ namespace VerbalCommands
 				}
 			}
 			plan.notes.AddRange(notes);
-			if (layout.leftOut.Count > 0)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
 			{
-				plan.notes.Add("Left out, no place for it: " + FormPlanner.JoinNames(layout.leftOut) + ".");
-			}
-			foreach (ThingDef powered in layout.pieces.Select((Piece p) => p.def).Distinct().Where((ThingDef d) => NeedsPower(d)))
-			{
-				plan.notes.Add(FormPlanner.UpperFirst(LabelOf(powered)) + " needs power; it stays off until a power line reaches it.");
+				if (layout.leftOut.Count > 0)
+				{
+					plan.notes.Add("Left out, no place for it: " + FormPlanner.JoinNames(layout.leftOut) + ".");
+				}
+				foreach (ThingDef powered in layout.pieces.Select((Piece p) => p.def).Distinct().Where((ThingDef d) => NeedsPower(d)))
+				{
+					plan.notes.Add(FormPlanner.UpperFirst(LabelOf(powered)) + " needs power; it stays off until a power line reaches it.");
+				}
 			}
 
 			string corners = Corners(rect);
@@ -232,11 +236,15 @@ namespace VerbalCommands
 			PlaceFacility(layout, FirstAvailable("EndTable"), bed);
 			PlaceFacility(layout, FirstAvailable("Dresser"), bed);
 			PlaceLights(layout, 1);
-			if (layout.shell.inside.Area < TightBedroomCells)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
 			{
-				notes.Add("Rather tight: a 5 by 5 or 4 by 6 inside (7 by 7 or 6 by 8 outside) gives a better mood.");
+				if (layout.shell.inside.Area < TightBedroomCells)
+				{
+					notes.Add("Rather tight: a 5 by 5 or 4 by 6 inside (7 by 7 or 6 by 8 outside) gives a better mood.");
+				}
+				notes.Add("One bed for people makes the room a bedroom.");
 			}
-			notes.Add("One bed for people makes the room a bedroom.");
 		}
 
 		private static void FillBarracks(Layout layout, string size, int wanted, List<string> notes)
@@ -267,7 +275,11 @@ namespace VerbalCommands
 				PlaceFacility(layout, endTable, bed);
 			}
 			PlaceLights(layout, Math.Max(1, layout.shell.inside.Area / CellsPerLight));
-			notes.Add(beds.Count > 1 ? "Two or more beds for people make the room a barracks." : "One bed for people makes the room a bedroom, not a barracks.");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				notes.Add(beds.Count > 1 ? "Two or more beds for people make the room a barracks." : "One bed for people makes the room a bedroom, not a barracks.");
+			}
 		}
 
 		private static void FillKitchen(Layout layout, string size, List<string> notes)
@@ -287,7 +299,11 @@ namespace VerbalCommands
 				layout.leftOut.Add(LabelOf(butcher));
 			}
 			PlaceLights(layout, 1);
-			notes.Add("A stove that cooks meals makes the room a kitchen; butchering in the same room makes it dirty, which makes food poisoning more likely.");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				notes.Add("A stove that cooks meals makes the room a kitchen; butchering in the same room makes it dirty, which makes food poisoning more likely.");
+			}
 		}
 
 		private static void FillDiningRoom(Layout layout, string size, List<string> notes)
@@ -322,7 +338,11 @@ namespace VerbalCommands
 				layout.leftOut.Add("seats");
 			}
 			PlaceLights(layout, 1);
-			notes.Add("A table to eat at makes the room a dining room; " + seats + (seats == 1 ? " seat stands" : " seats stand") + " at the table.");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				notes.Add("A table to eat at makes the room a dining room; " + seats + (seats == 1 ? " seat stands" : " seats stand") + " at the table.");
+			}
 		}
 
 		private static void FillResearchRoom(Layout layout, string size, List<string> notes)
@@ -342,7 +362,11 @@ namespace VerbalCommands
 				PlaceFacility(layout, FirstAvailable("MultiAnalyzer"), bench);
 			}
 			PlaceLights(layout, 1);
-			notes.Add("A research bench makes the room a laboratory; a clean room researches faster.");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				notes.Add("A research bench makes the room a laboratory; a clean room researches faster.");
+			}
 		}
 
 		// ---- placing one kind of piece ----------------------------------------------------------------
@@ -678,7 +702,11 @@ namespace VerbalCommands
 				return n;
 			}
 			int colonists = Math.Max(1, map.mapPawns.FreeColonistsSpawnedCount);
-			notes.Add("No number of beds was said: one for each of the " + colonists + (colonists == 1 ? " colonist" : " colonists") + " on the map.");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				notes.Add("No number of beds was said: one for each of the " + colonists + (colonists == 1 ? " colonist" : " colonists") + " on the map.");
+			}
 			return colonists;
 		}
 

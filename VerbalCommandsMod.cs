@@ -63,6 +63,16 @@ namespace VerbalCommands
 		// The colonists' walks through doors and the daily door reminders (AgentDoorPathScan.cs; user, 2026-10-14: "add
 		// to mod option setting (pathfind cost) gate."). On by default; off and nothing is recorded or reminded.
 		public bool pathfindCost = true;
+		// Settings gate (user, 2026-10-26): per-category on/off for the text the playing agent gets. Every one is on by default;
+		// off and the agent does not get that category's text. The Scribe key is the field name. Read through the
+		// VerbalCommandsMod.*On properties (Know-how tips is agentTips above).
+		public bool remindBase = true;
+		public bool remindFood = true;
+		public bool remindPawn = true;
+		public bool remindResource = true;
+		public bool remindUrgent = true;
+		public bool buildPlacementChecks = true;
+		public bool buildAdviceNotes = true;
 
 		// Scribe string buffers for the numeric fields drawn with Widgets.TextFieldNumeric.
 		[Unsaved(false)]
@@ -101,6 +111,14 @@ namespace VerbalCommands
 			Scribe_Values.Look(ref fallbackOnCannot, "fallbackOnCannot", false);
 			Scribe_Values.Look(ref recordHumanPlay, "recordHumanPlay", false);
 			Scribe_Values.Look(ref pathfindCost, "pathfindCost", true);
+			// Settings gate (user, 2026-10-26): per-category agent text gates, all default on.
+			Scribe_Values.Look(ref remindBase, "remindBase", true);
+			Scribe_Values.Look(ref remindFood, "remindFood", true);
+			Scribe_Values.Look(ref remindPawn, "remindPawn", true);
+			Scribe_Values.Look(ref remindResource, "remindResource", true);
+			Scribe_Values.Look(ref remindUrgent, "remindUrgent", true);
+			Scribe_Values.Look(ref buildPlacementChecks, "buildPlacementChecks", true);
+			Scribe_Values.Look(ref buildAdviceNotes, "buildAdviceNotes", true);
 
 			// Brief 11 section A.1 migration: existing installs saved voiceToggleEverywhere=false
 			// (its old default) before this brief; settingsVersion is missing from their file too, so
@@ -143,6 +161,25 @@ namespace VerbalCommands
 	public class VerbalCommandsMod : Mod
 	{
 		public static VerbalCommandsSettings Settings;
+
+		// Settings gate (user, 2026-10-26): one property per category of text the playing agent gets. Each is true while
+		// Settings is null (nothing loaded yet: behaviour as before) and otherwise follows the settings window's checkbox.
+		// Know-how tips.
+		public static bool TipsOn { get { return Settings == null || Settings.agentTips; } }
+		// Base and building reminders (includes 6hr, 12hr and daily).
+		public static bool BaseRemindersOn { get { return Settings == null || Settings.remindBase; } }
+		// Food and Farming reminders.
+		public static bool FoodRemindersOn { get { return Settings == null || Settings.remindFood; } }
+		// Pawn and work reminders.
+		public static bool PawnRemindersOn { get { return Settings == null || Settings.remindPawn; } }
+		// Resource reminders.
+		public static bool ResourceRemindersOn { get { return Settings == null || Settings.remindResource; } }
+		// Urgent reminders.
+		public static bool UrgentRemindersOn { get { return Settings == null || Settings.remindUrgent; } }
+		// Building placement checks.
+		public static bool PlacementChecksOn { get { return Settings == null || Settings.buildPlacementChecks; } }
+		// Build advice tips/notes.
+		public static bool BuildAdviceOn { get { return Settings == null || Settings.buildAdviceNotes; } }
 
 		// Verse/ModContentPack.cs:66 `public string RootDir => rootDirInt.FullName;` - the mod's root
 		// folder (contains About\, 1.6\, Defs\, and the Models\ this brief adds), NOT the
@@ -436,7 +473,7 @@ namespace VerbalCommands
 			CheckboxWithTip(listing, "VerbalCommands_Settings_SaveRouterLog".Translate(), ref Settings.saveRouterLog,
 				"VerbalCommands_Settings_SaveRouterLogTip".Translate());
 			listing.CheckboxLabeled("VerbalCommands_Settings_AgentInbox".Translate(), ref Settings.agentInbox);
-			listing.CheckboxLabeled("VerbalCommands_Settings_AgentTips".Translate(), ref Settings.agentTips);
+			// Settings gate (user, 2026-10-26): the Know-how tips row moved to the last section below.
 			listing.CheckboxLabeled("VerbalCommands_Settings_PathfindCost".Translate(), ref Settings.pathfindCost);
 			listing.CheckboxLabeled("VerbalCommands_Settings_RecordHumanPlay".Translate(), ref Settings.recordHumanPlay);
 
@@ -488,6 +525,18 @@ namespace VerbalCommands
 			bool remindDevModeNotice = !Settings.devModeVoiceNoticeSuppressed;
 			listing.CheckboxLabeled("VerbalCommands_Settings_RemindDevModeNotice".Translate(), ref remindDevModeNotice);
 			Settings.devModeVoiceNoticeSuppressed = !remindDevModeNotice;
+
+			// Settings gate (user, 2026-10-26): per-category on/off for the text the playing agent gets; no tooltips, no extra rows.
+			listing.Gap();
+			listing.Label("VerbalCommands_Settings_DevSection".Translate());
+			listing.CheckboxLabeled("VerbalCommands_Settings_AgentTips".Translate(), ref Settings.agentTips);
+			listing.CheckboxLabeled("VerbalCommands_Settings_RemindBase".Translate(), ref Settings.remindBase);
+			listing.CheckboxLabeled("VerbalCommands_Settings_RemindFood".Translate(), ref Settings.remindFood);
+			listing.CheckboxLabeled("VerbalCommands_Settings_RemindPawn".Translate(), ref Settings.remindPawn);
+			listing.CheckboxLabeled("VerbalCommands_Settings_RemindResource".Translate(), ref Settings.remindResource);
+			listing.CheckboxLabeled("VerbalCommands_Settings_RemindUrgent".Translate(), ref Settings.remindUrgent);
+			listing.CheckboxLabeled("VerbalCommands_Settings_BuildChecks".Translate(), ref Settings.buildPlacementChecks);
+			listing.CheckboxLabeled("VerbalCommands_Settings_BuildAdvice".Translate(), ref Settings.buildAdviceNotes);
 
 			listing.End();
 			// Remember this frame's real content height (Listing.CurHeight, Verse/Listing.cs:30) so

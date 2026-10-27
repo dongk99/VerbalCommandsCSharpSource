@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VerbalCommands")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+720d05f2df5045400211405f222f069cea9d52d4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+58b33dcbc670353ec6b1da6ed2ab0678fbc5870a")]
 [assembly: System.Reflection.AssemblyProductAttribute("VerbalCommands")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VerbalCommands")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

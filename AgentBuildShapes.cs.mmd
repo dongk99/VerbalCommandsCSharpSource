@@ -56,7 +56,12 @@ flowchart TB
   shell --> writes --> roof
   writes -. "fogMineCells counted as open" .-> dc["AgentDoorCheck.NoteShell"]
 
-  class l_vent new
+  s_note -.- sg{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  sg -- no --> sgx["NEW 2026-10-26: room shell notes not added (door side, moved room, edge cells,<br/>fogged edge cells, door already there, trees inside, ~913-1014); plan lines unchanged"]
+  roof -.- rg{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  rg -- no --> rgx["NEW 2026-10-26: AddRoofNotes / AddAutoRoofRules notes not added (~1241-1295)"]
+
+  class sg,sgx,rg,rgx new
   class s_old,s_dold,s_eold removed
   classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
   classDef removed fill:#f7b6b6,stroke-dasharray:6 4

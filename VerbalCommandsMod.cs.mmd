@@ -7,3 +7,13 @@ flowchart TD
     D --> CB["listing.CheckboxLabeled(key.Translate(), ref Settings.X) (:400, :430-438)<br/>e.g. VerbalCommands_Settings_AgentInbox -> agentInbox (:438)"]
     D --> TIP["CheckboxWithTip: Widgets.CheckboxLabeled + instant tooltip (:264-273)"]
     D --> H["headless row: Widgets.CheckboxLabeled(..., disabled: true) (:393)"]
+    S --> NF["NEW 2026-10-26: fields, default true, Scribe key = field name:<br/>remindBase, remindFood, remindPawn, remindResource, remindUrgent,<br/>buildPlacementChecks, buildAdviceNotes (agentTips already there, :56)"]
+    M --> NG["NEW 2026-10-26: static gates, true while Settings is null:<br/>TipsOn = agentTips, BaseRemindersOn, FoodRemindersOn, PawnRemindersOn,<br/>ResourceRemindersOn, UrgentRemindersOn, PlacementChecksOn, BuildAdviceOn"]
+    NG -.-> US["NEW 2026-10-26: read by AgentReminderScan, AgentInbox (inbox_state.json gates),<br/>the placement checks and the build advice notes"]
+    CB --> OLD["REMOVED: Agent tips row between Agent inbox and Pathfind cost (:439)"]
+    D --> SEC["NEW 2026-10-26: last rows, after 'Remind me about the dev-mode voice key' (:489):<br/>Gap, Label VerbalCommands_Settings_DevSection, then one checkbox each:<br/>AgentTips (agentTips), RemindBase, RemindFood, RemindPawn,<br/>RemindResource, RemindUrgent, BuildChecks, BuildAdvice"]
+    SEC -.-> XML["NEW 2026-10-26: Languages English Keyed VerbalCommands.xml: DevSection + 7 new keys,<br/>AgentTips text now 'Know-how tips (agent tips)'"]
+    class NF,NG,US,SEC,XML new
+    class OLD removed
+    classDef new fill:#b6f2b6
+    classDef removed fill:#f7b6b6,stroke-dasharray:6 4

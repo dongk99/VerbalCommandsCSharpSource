@@ -143,7 +143,11 @@ namespace VerbalCommands
 			List<Thing> chunks = unmarked.SelectMany((KeyValuePair<Room, List<Thing>> kv) => kv.Value).ToList();
 
 			Plan plan = FormPlanner.NewPlan(c.form);
-			plan.askConfirm = true;
+			// Settings gate (user, 2026-10-26): Building placement checks.
+			if (VerbalCommandsMod.PlacementChecksOn)
+			{
+				plan.askConfirm = true;
+			}
 			Write write = new Write();
 			write.description = "move chunks";
 			write.apply = delegate

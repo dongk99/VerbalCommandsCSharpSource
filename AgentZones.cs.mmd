@@ -1,0 +1,10 @@
+flowchart TB
+  gz["growing zone set or created (AddCropNotes called ~146, ~377)"] --> cn{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  cn -- yes --> cnn["AddCropNotes ~901-936: no colonist can sow the crop yet; cells below the crop's fertility;<br/>crop does not grow under a roof; crop needs darkness"]
+  cn -- no --> cnx["NEW 2026-10-26: crop notes not added"]
+  fz["fertility note (~420)"] --> fn{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  fn -- yes --> fnn["note added (unchanged text)"]
+  fn -- no --> fnx["NEW 2026-10-26: note not added"]
+  so["'sowing already on/off' note (~337), RISKY zone lines (~527, ~532, ~594): unchanged"]
+  class cn,cnx,fn,fnx new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

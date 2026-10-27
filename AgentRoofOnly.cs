@@ -141,11 +141,13 @@ namespace VerbalCommands
 
 			Plan plan = FormPlanner.NewPlan(c.form);
 			int unsupported = unroofed.Count((IntVec3 cell) => !RoofCollapseUtility.WithinRangeOfRoofHolder(cell, map));
-			if (unsupported > 0)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && unsupported > 0)
 			{
 				plan.notes.Add(UnsupportedNote(unsupported));
 			}
-			if (turnOn)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. turnOn still drives the write.
+			if (VerbalCommandsMod.BuildAdviceOn && turnOn)
 			{
 				plan.notes.Add(TurnedOnNote(pawn));
 			}

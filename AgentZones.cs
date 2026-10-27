@@ -143,7 +143,11 @@ namespace VerbalCommands
 				{
 					throw new Fault(refusal);
 				}
-				AddCropNotes(map, crop, cells, plan.notes);
+				// Settings gate (user, 2026-10-26): Build advice tips/notes.
+				if (VerbalCommandsMod.BuildAdviceOn)
+				{
+					AddCropNotes(map, crop, cells, plan.notes);
+				}
 			}
 
 			int parts = CountComponents(cells);
@@ -374,7 +378,11 @@ namespace VerbalCommands
 			}
 			ThingDef was = growing.GetPlantDefToGrow();
 			ZPlan plan = FormPlanner.NewPlan(c.form);
-			AddCropNotes(map, crop, cells, plan.notes);
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				AddCropNotes(map, crop, cells, plan.notes);
+			}
 			string line = "Grow " + CropLabel(crop) + " in " + growing.label + " (was " + (was != null ? CropLabel(was) : "nothing") + ").";
 			Write write = new Write();
 			write.description = "grow " + CropLabel(crop) + " in " + growing.label;
@@ -415,7 +423,8 @@ namespace VerbalCommands
 			}
 			ZPlan plan = FormPlanner.NewPlan(c.form);
 			Zone_Growing gz = zone as Zone_Growing;
-			if (gz != null && gz.GetPlantDefToGrow() != null)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && gz != null && gz.GetPlantDefToGrow() != null)
 			{
 				AddGrowFertilityNote(map, gz.GetPlantDefToGrow(), added, plan.notes);
 			}

@@ -1,0 +1,12 @@
+flowchart TB
+  ra["roof area plan (build roof / remove roof in AREA)"] --> rn{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  rn -- yes --> rnn["notes: plants that can't live under a roof (~240);<br/>cells too far from a wall or column to hold a roof (~244)"]
+  rn -- no --> rnx["NEW 2026-10-26: those two notes not added"]
+  ra --> rc["AgentWindCheck.NoteRoof / AgentLightCheck.NoteRoof (~251-252):<br/>gated inside those files by PlacementChecksOn; calls unchanged"]
+  ra --> mk["mark-cleared notes (~249, ~259): unchanged"]
+  aa["allowed area plan (make / change an allowed area)"] --> an{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  an -- yes --> ann["notes: 'Area LABEL will have 0 cells ...' (~267);<br/>'Use restrict PAWNS to area NAME. to keep colonists in it.' (~328)"]
+  an -- no --> anx["NEW 2026-10-26: those two notes not added"]
+  da["delete area: RISKY line (~401): unchanged"]
+  class rn,rnx,an,anx new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

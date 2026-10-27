@@ -1,6 +1,8 @@
 flowchart TB
   in["NEW: AgentVentCheck.Note(plan, map, placed)<br/>overloads: (def, cell, rot) / (def, cells, rot) / List of Placed"]
-  in --> kind{"NEW: each placed thing"}
+  in --> gate{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn? (every overload)"}
+  gate -- no --> gr["NEW 2026-10-26: return: no 'Vent instead' note"]
+  gate -- yes --> kind{"NEW: each placed thing"}
   kind -- "Building_Heater" --> heat["NEW: room = its own cell's room<br/>(Building_Heater.cs:22)"]
   kind -- "Building_Cooler" --> cool["NEW: room = cold side cell + South.RotatedBy(rot)<br/>(Building_Cooler.cs:18, 40)"]
   kind -- other --> skip[NEW: skip]
@@ -14,5 +16,5 @@ flowchart TB
   any -- no --> none[NEW: no note]
   any -- yes --> note["NEW: plan note:<br/>Vent instead: ROOM 22C, ROOM 18C."]
   err["NEW: any exception: Log.Warning, plan goes on"]
-  class in,kind,heat,cool,skip,ok,scan,math,band,any,none,note,err new
+  class gate,gr new
   classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

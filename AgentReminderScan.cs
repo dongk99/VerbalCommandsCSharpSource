@@ -65,7 +65,7 @@ namespace VerbalCommands
 		private const int SlotsPerDay = GenDate.TicksPerDay / SlotTicks;   // 4
 
 		private static int lastSlot = int.MinValue;
-		private static List<string> pending = new List<string>();
+		private static List<GatedLine> pending = new List<GatedLine>();
 		// The daily door lines (AgentDoorPathScan.cs; user: "reminder fires every day"): kept apart so a 6-hour scan
 		// does not replace them; the next day's lines do.
 		private static List<string> doorPending = new List<string>();
@@ -73,10 +73,31 @@ namespace VerbalCommands
 		// given with the next batch; a newer one replaces it.
 		private static string roomPending;
 
+		// Settings gates (user, 2026-10-26): a 6-hour line is queued with the gate of its category (Base and building,
+		// Pawn and work, Resource, Know-how tips), and TakeFor drops it if that gate is off by the time it is handed out.
+		// The door and room lines are Base, the grow lines Food, the break / bleed / merchant lines Urgent: one gate for
+		// the whole queue, checked in TakeFor.
+		private sealed class GatedLine
+		{
+			public readonly string Line;
+			public readonly Func<bool> Gate;
+
+			public GatedLine(string line, Func<bool> gate)
+			{
+				Line = line;
+				Gate = gate;
+			}
+		}
+
+		private static readonly Func<bool> BaseGate = () => VerbalCommandsMod.BaseRemindersOn;
+		private static readonly Func<bool> PawnGate = () => VerbalCommandsMod.PawnRemindersOn;
+		private static readonly Func<bool> ResourceGate = () => VerbalCommandsMod.ResourceRemindersOn;
+		private static readonly Func<bool> TipsGate = () => VerbalCommandsMod.TipsOn;
+
 		public static void Reset()
 		{
 			lastSlot = int.MinValue;
-			pending = new List<string>();
+			pending = new List<GatedLine>();
 			doorPending = new List<string>();
 			roomPending = null;
 			scannedAt = "";
@@ -122,7 +143,11 @@ namespace VerbalCommands
 			{
 				if (map != null && map.IsPlayerHome)
 				{
-					lines.AddRange(AgentGrowScan.Lines(map));
+					// Settings gate (user, 2026-10-26): Food and Farming reminders. Off: no scan; an empty result still replaces the old lines, as a newer scan does.
+					if (VerbalCommandsMod.FoodRemindersOn)
+					{
+						lines.AddRange(AgentGrowScan.Lines(map));
+					}
 					// The deterioration alert moved to the hourly check (AgentHourlyCheck.cs, 2026-10-16).
 				}
 			}
@@ -152,10 +177,11 @@ namespace VerbalCommands
 			lastSlot = slot;
 			pending = Scan();
 			scannedAt = ScanTime();
-			AgentReminderLog.Scan("6-hour check", scannedAt, pending);
+			AgentReminderLog.Scan("6-hour check", scannedAt, pending.Select((GatedLine g) => g.Line).ToList());
 			if (slot % 2 == 0)
 			{
-				string rooms = AgentRoomScan.Text();
+				// Settings gate (user, 2026-10-26): Base and building reminders (12-hour room list). Off: no scan, as if there was nothing to say.
+				string rooms = VerbalCommandsMod.BaseRemindersOn ? AgentRoomScan.Text() : null;
 				if (rooms != null)
 				{
 					roomPending = rooms;
@@ -164,7 +190,8 @@ namespace VerbalCommands
 			}
 			if (newDay)
 			{
-				doorPending = AgentDoorPathScan.DailyLines();
+				// Settings gate (user, 2026-10-26): Base and building reminders (daily door lines; the pathfindCost check inside DailyLines stays). Off: no scan (it records suggestions), and the old lines are replaced by none.
+				doorPending = VerbalCommandsMod.BaseRemindersOn ? AgentDoorPathScan.DailyLines() : new List<string>();
 				AgentReminderLog.Scan("Daily door check", scannedAt, doorPending);
 			}
 		}
@@ -190,11 +217,32 @@ namespace VerbalCommands
 			{
 				return new List<string>();
 			}
-			bool scanned = pending.Count > 0 || doorPending.Count > 0;
-			bool grown = growPending.Count > 0;
-			List<string> batch = pending;
-			batch.AddRange(doorPending);
-			batch.AddRange(growPending);
+			// Settings gates (user, 2026-10-26): a line queued while its gate was on is dropped here if the gate is off by now.
+			// The 6-hour lines each keep their own gate (GatedLine); the door and room lines are Base, the grow lines Food, the
+			// break / bleed / merchant lines Urgent. The titles below follow what is left.
+			bool baseOn = VerbalCommandsMod.BaseRemindersOn;
+			bool foodOn = VerbalCommandsMod.FoodRemindersOn;
+			List<string> batch = pending.Where((GatedLine g) => g.Gate()).Select((GatedLine g) => g.Line).ToList();
+			bool scanned = batch.Count > 0 || (baseOn && doorPending.Count > 0);
+			bool grown = foodOn && growPending.Count > 0;
+			if (baseOn)
+			{
+				batch.AddRange(doorPending);
+			}
+			if (foodOn)
+			{
+				batch.AddRange(growPending);
+			}
+			if (!VerbalCommandsMod.UrgentRemindersOn)
+			{
+				// Urgent lines dropped here are also forgotten (the seen-sets), so turning the gate on during the same event reports it.
+				breakSeen.ExceptWith(breakPending);
+				bleedSeen.ExceptWith(bleedPending);
+				merchantSeen.ExceptWith(merchantPending);
+				breakPending.Clear();
+				bleedPending.Clear();
+				merchantPending.Clear();
+			}
 			// Mental breaks are checked again now: one that ended, or got a prisoner bed since, is dropped.
 			bool breaks = false;
 			foreach (Pawn p in breakPending)
@@ -229,7 +277,7 @@ namespace VerbalCommands
 				}
 			}
 			merchantSeen.RemoveWhere((Pawn p) => p == null || !p.Spawned || p.Dead);
-			pending = new List<string>();
+			pending = new List<GatedLine>();
 			doorPending = new List<string>();
 			growPending = new List<string>();
 			breakPending = new List<Pawn>();
@@ -239,8 +287,11 @@ namespace VerbalCommands
 			string forms = string.Join(", ", actions.OfType<JObject>().Select((JObject a) => (string)a["form"]).Where((string f) => f != null).Distinct().ToArray());
 			if (roomPending != null)
 			{
-				result.Add(roomPending);
-				AgentReminderLog.Delivered(roomPending.Split('\n')[0], forms);
+				if (baseOn)
+				{
+					result.Add(roomPending);
+					AgentReminderLog.Delivered(roomPending.Split('\n')[0], forms);
+				}
 				roomPending = null;
 			}
 			if (batch.Count == 0)
@@ -301,6 +352,11 @@ namespace VerbalCommands
 			}
 			bleedSeen.RemoveWhere((Pawn p) => !bleeding.Contains(p));
 			bleedPending.RemoveAll((Pawn p) => !bleeding.Contains(p));
+			// Settings gate (user, 2026-10-26): Urgent reminders. Off: no line is made and the pawn is not marked seen, so turning it on during the event reports it.
+			if (!VerbalCommandsMod.UrgentRemindersOn)
+			{
+				return;
+			}
 			foreach (Pawn p in bleeding)
 			{
 				string line = bleedSeen.Add(p) ? BleedLine(p) : null;
@@ -350,6 +406,11 @@ namespace VerbalCommands
 
 		internal static void MerchantEntered(Pawn p)
 		{
+			// Settings gate (user, 2026-10-26): Urgent reminders. Off: no line, and the merchant is not marked seen, so turning it on while they stand in the home zone reports them at their next step.
+			if (!VerbalCommandsMod.UrgentRemindersOn)
+			{
+				return;
+			}
 			if (merchantSeen.Add(p))
 			{
 				merchantPending.Add(p);
@@ -392,6 +453,11 @@ namespace VerbalCommands
 			}
 			breakSeen.RemoveWhere((Pawn p) => !breaking.Contains(p));
 			breakPending.RemoveAll((Pawn p) => !breaking.Contains(p));
+			// Settings gate (user, 2026-10-26): Urgent reminders. Off: no line is made and the pawn is not marked seen, so turning it on during the break reports it.
+			if (!VerbalCommandsMod.UrgentRemindersOn)
+			{
+				return;
+			}
 			foreach (Pawn p in breaking)
 			{
 				string breakLine = breakSeen.Add(p) ? BreakLine(p) : null;
@@ -465,37 +531,70 @@ namespace VerbalCommands
 
 		// ---- the scan ---------------------------------------------------------------------------------------------
 
-		// The 6-hour batch: what did not move to the hourly check (AgentHourlyCheck.cs, 2026-10-16).
-		private static List<string> Scan()
+		// The lines of one producer, each queued with the gate of its category (user, 2026-10-26).
+		private static void AddGated(List<GatedLine> into, IEnumerable<string> lines, Func<bool> gate)
 		{
-			List<string> lines = new List<string>();
+			foreach (string line in lines)
+			{
+				into.Add(new GatedLine(line, gate));
+			}
+		}
+
+		// The 6-hour batch: what did not move to the hourly check (AgentHourlyCheck.cs, 2026-10-16).
+		private static List<GatedLine> Scan()
+		{
+			List<GatedLine> lines = new List<GatedLine>();
 			foreach (Map map in Find.Maps)
 			{
 				if (map != null && map.IsPlayerHome)
 				{
-					string chunks = AgentChunks.ReminderLine(map);
-					if (chunks != null)
+					// Settings gate (user, 2026-10-26): Base and building reminders (stone chunks).
+					if (VerbalCommandsMod.BaseRemindersOn)
 					{
-						lines.Add(chunks);
+						string chunks = AgentChunks.ReminderLine(map);
+						if (chunks != null)
+						{
+							lines.Add(new GatedLine(chunks, BaseGate));
+						}
 					}
-					lines.AddRange(AgentResourceScan.Lines(map));
-					string heaterLine = HeaterLine(map);
-					if (heaterLine != null)
+					// Settings gate (user, 2026-10-26): Resource reminders (steel / component / plasteel sources).
+					if (VerbalCommandsMod.ResourceRemindersOn)
 					{
-						lines.Add(heaterLine);
+						AddGated(lines, AgentResourceScan.Lines(map), ResourceGate);
 					}
-					lines.AddRange(AgentBenchScan.StonecutterLines(map));
-					lines.AddRange(WeaponLines(map));
+					// Settings gate (user, 2026-10-26): Base and building reminders (heater, stonecutter).
+					if (VerbalCommandsMod.BaseRemindersOn)
+					{
+						string heaterLine = HeaterLine(map);
+						if (heaterLine != null)
+						{
+							lines.Add(new GatedLine(heaterLine, BaseGate));
+						}
+						AddGated(lines, AgentBenchScan.StonecutterLines(map), BaseGate);
+					}
+					// Settings gate (user, 2026-10-26): Pawn and work reminders (weapons).
+					if (VerbalCommandsMod.PawnRemindersOn)
+					{
+						AddGated(lines, WeaponLines(map), PawnGate);
+					}
 					// Micro orders' leftovers (AgentMicro.cs; user, 2026-10-16: "a reminder shell is created (every 6hr)" / "Yes. batch.").
-					lines.AddRange(AgentMicro.LeftoverLines(map));
+					// Settings gate (user, 2026-10-26): Resource reminders.
+					if (VerbalCommandsMod.ResourceRemindersOn)
+					{
+						AddGated(lines, AgentMicro.LeftoverLines(map), ResourceGate);
+					}
 				}
 			}
 			// Drafting tip, every 6-hour check, no condition (user, 2026-10-15: "have a tip fire every 6hr saying [TIP] if
 			// youre expecting an option from pawn menu, but dont see, maybe its because you havent drafted the pawn! try
 			// drafting them, look for option, and when finished, undraft them."). Token-gap tips (TipInjector) can't keep game
 			// hours, so it rides in this batch; "[TIP]" stays (Block strips only "[REMINDER] ").
-			lines.Add("[TIP] If you're expecting an option from the pawn menu but don't see it, maybe it's because you haven't drafted the pawn! Try drafting them, look"
-				+ " for the option, and when finished, undraft them.");
+			// Settings gate (user, 2026-10-26): Know-how tips.
+			if (VerbalCommandsMod.TipsOn)
+			{
+				lines.Add(new GatedLine("[TIP] If you're expecting an option from the pawn menu but don't see it, maybe it's because you haven't drafted the pawn! Try drafting them, look"
+					+ " for the option, and when finished, undraft them.", TipsGate));
+			}
 			return lines;
 		}
 
@@ -511,7 +610,8 @@ namespace VerbalCommands
 			int moreDark = 0;
 			foreach (Map map in Find.Maps)
 			{
-				if (map == null || !map.IsPlayerHome)
+				// Settings gate (user, 2026-10-26): Base and building reminders (work spot penalty and light lines, with their "And N more").
+				if (!VerbalCommandsMod.BaseRemindersOn || map == null || !map.IsPlayerHome)
 				{
 					continue;
 				}
@@ -569,39 +669,74 @@ namespace VerbalCommands
 			{
 				if (map != null && map.IsPlayerHome)
 				{
-					lines.AddRange(AgentRoomTempScan.Lines(map));
-					string stove = StoveLine(map);
-					if (stove != null)
+					// Settings gate (user, 2026-10-26): Base and building reminders (room temperature and vents, stove).
+					if (VerbalCommandsMod.BaseRemindersOn)
 					{
-						lines.Add(stove);
+						lines.AddRange(AgentRoomTempScan.Lines(map));
+						string stove = StoveLine(map);
+						if (stove != null)
+						{
+							lines.Add(stove);
+						}
 					}
-					string bulkMeal = BulkMealLine(map);
-					if (bulkMeal != null)
+					// Settings gate (user, 2026-10-26): Food and Farming reminders (bulk meals).
+					if (VerbalCommandsMod.FoodRemindersOn)
 					{
-						lines.Add(bulkMeal);
+						string bulkMeal = BulkMealLine(map);
+						if (bulkMeal != null)
+						{
+							lines.Add(bulkMeal);
+						}
 					}
-					lines.AddRange(AgentBenchScan.WorkLines(map));
-					string blueprints = BlueprintLine(map);
-					if (blueprints != null)
+					// Settings gate (user, 2026-10-26): Pawn and work reminders (benches).
+					if (VerbalCommandsMod.PawnRemindersOn)
 					{
-						lines.Add(blueprints);
+						lines.AddRange(AgentBenchScan.WorkLines(map));
 					}
-					lines.AddRange(AgentWorkChanceScan.Lines(map));
-					string carry = CarryMedicineLine(map);
-					if (carry != null)
+					// Settings gate (user, 2026-10-26): Base and building reminders (blueprints waiting).
+					if (VerbalCommandsMod.BaseRemindersOn)
 					{
-						lines.Add(carry);
+						string blueprints = BlueprintLine(map);
+						if (blueprints != null)
+						{
+							lines.Add(blueprints);
+						}
 					}
-					lines.AddRange(AgentDeteriorationScan.Lines(map));
-					// Rotting food, indoors by room and outdoors by 10x10 square (AgentRotScan.cs; user, 2026-10-17).
-					lines.AddRange(AgentRotScan.Lines(map));
+					// Settings gate (user, 2026-10-26): Pawn and work reminders (botched builds, doctors' medicine).
+					if (VerbalCommandsMod.PawnRemindersOn)
+					{
+						lines.AddRange(AgentWorkChanceScan.Lines(map));
+						string carry = CarryMedicineLine(map);
+						if (carry != null)
+						{
+							lines.Add(carry);
+						}
+					}
+					// Settings gate (user, 2026-10-26): Food and Farming reminders (deterioration, rotting food).
+					if (VerbalCommandsMod.FoodRemindersOn)
+					{
+						lines.AddRange(AgentDeteriorationScan.Lines(map));
+						// Rotting food, indoors by room and outdoors by 10x10 square (AgentRotScan.cs; user, 2026-10-17).
+						lines.AddRange(AgentRotScan.Lines(map));
+					}
 					// Drafted pawns and forbidden buildings / items (user, 2026-10-25; DraftLines, ForbiddenLines below).
-					lines.AddRange(DraftLines(map, draftSpots));
-					lines.AddRange(ForbiddenLines(map));
+					// Settings gate (user, 2026-10-26): Pawn and work reminders. DraftLines always runs: it records where the
+					// drafted pawns stand (draftSpots, then lastDraftSpot), which the next hourly scan compares; only its lines are held back.
+					List<string> drafted = DraftLines(map, draftSpots);
+					if (VerbalCommandsMod.PawnRemindersOn)
+					{
+						lines.AddRange(drafted);
+					}
+					// Settings gate (user, 2026-10-26): Base and building reminders (forbidden buildings and items).
+					if (VerbalCommandsMod.BaseRemindersOn)
+					{
+						lines.AddRange(ForbiddenLines(map));
+					}
 				}
 			}
 			lastDraftSpot = draftSpots;
-			string hypothermia = HypothermiaLine();
+			// Settings gate (user, 2026-10-26): Pawn and work reminders.
+			string hypothermia = VerbalCommandsMod.PawnRemindersOn ? HypothermiaLine() : null;
 			if (hypothermia != null)
 			{
 				lines.Add(hypothermia);

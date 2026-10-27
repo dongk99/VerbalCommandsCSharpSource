@@ -33,7 +33,9 @@ flowchart TD
   out1 --> amb
   hout --> amb
   amb --- idside
-  class amb,idside new
-  class rooms,idm,allout,out1,hout,router new
+  bed["bed role change (~552-638): medical bed / prisoner bed"] --> bg{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  bg -- yes --> bn["plan notes: a prison cell is the whole room; a room stays a prison cell; can't be a medical bed;<br/>can't be for prisoners (no prison cell possible); a changed bed loses its colonists"]
+  bg -- no --> bx["NEW 2026-10-26: those notes not added; the bed changes are unchanged"]
+  class bg,bx new
   classDef new fill:#b6f2b6
   classDef removed fill:#f7b6b6,stroke-dasharray:6 4

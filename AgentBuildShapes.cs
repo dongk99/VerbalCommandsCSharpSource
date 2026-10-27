@@ -910,11 +910,19 @@ namespace VerbalCommands
 				if (problem == null)
 				{
 					shell.sharedDoors.Add(w.door);
-					shell.notes.Add("A door goes in the wall shared with the room at " + Corners(w.room) + ", at " + Xz(w.door) + ".");
+					// Settings gate (user, 2026-10-26): Build advice tips/notes.
+					if (VerbalCommandsMod.BuildAdviceOn)
+					{
+						shell.notes.Add("A door goes in the wall shared with the room at " + Corners(w.room) + ", at " + Xz(w.door) + ".");
+					}
 				}
 				else
 				{
-					shell.notes.Add("No door in the wall shared with the room at " + Corners(w.room) + ": " + Trim(problem) + ".");
+					// Settings gate (user, 2026-10-26): Build advice tips/notes.
+					if (VerbalCommandsMod.BuildAdviceOn)
+					{
+						shell.notes.Add("No door in the wall shared with the room at " + Corners(w.room) + ": " + Trim(problem) + ".");
+					}
 				}
 			}
 
@@ -957,7 +965,8 @@ namespace VerbalCommands
 
 			// ---- notes ----
 			AddMaterialNotes(shell.notes, map, shell.needed);
-			if (fit != null && (fit.dx != 0 || fit.dz != 0))
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && fit != null && (fit.dx != 0 || fit.dz != 0))
 			{
 				List<string> moves = new List<string>();
 				if (fit.dx != 0)
@@ -971,36 +980,43 @@ namespace VerbalCommands
 				shell.notes.Add("The room is moved 1 cell " + string.Join(" and ", moves.ToArray()) + ", to " + rectText
 					+ ", onto the wall of the room at " + Corners(fit.shiftedTo) + ": no double wall.");
 			}
-			if (sideDefaulted)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && sideDefaulted)
 			{
 				shell.notes.Add("The door is on the south side; say 'door north' (or east, west) to choose.");
 			}
-			if (closed > 0)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && closed > 0)
 			{
 				shell.notes.Add(closed + (closed == 1 ? " edge cell already holds" : " edge cells already hold") + " a wall, a door or rock and "
 					+ (closed == 1 ? "closes" : "close") + " the room there; " + (closed == 1 ? "it is" : "they are") + " kept as " + (closed == 1 ? "it is" : "they are") + ".");
 			}
 			List<IntVec3> fogWalls = shell.fogEdge.Where((IntVec3 cell) => cell != shell.door).ToList();
-			if (fogWalls.Count > 0)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && fogWalls.Count > 0)
 			{
 				shell.notes.Add(fogWalls.Count + (fogWalls.Count == 1 ? " edge cell is" : " edge cells are") + " under fog ("
 					+ string.Join("; ", fogWalls.Take(NamedCells).Select((IntVec3 c) => Xz(c)).ToArray())
 					+ (fogWalls.Count > NamedCells ? "; and " + (fogWalls.Count - NamedCells) + " more" : "")
 					+ "); nothing is planned there. Once " + (fogWalls.Count == 1 ? "it is" : "they are") + " explored, rock stays as wall, open ground needs a wall.");
 			}
-			if (keepDoor)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && keepDoor)
 			{
 				shell.notes.Add("A door already stands or is planned at " + Xz(shell.door) + "; it is kept.");
 			}
-			if (dig && shell.alreadyMarked > 0)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && dig && shell.alreadyMarked > 0)
 			{
 				shell.notes.Add(shell.alreadyMarked + (shell.alreadyMarked == 1 ? " rock cell is" : " rock cells are") + " already marked for mining.");
 			}
-			if (dig && shell.doorInRock && !shell.placeDoor)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && dig && shell.doorInRock && !shell.placeDoor)
 			{
 				shell.notes.Add("The door cell is mined with the rest; once it is open, say 'build door at " + Xz(shell.door) + "'.");
 			}
-			if (trees > 0 || otherPlants > 0)
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && (trees > 0 || otherPlants > 0))
 			{
 				List<string> parts = new List<string>();
 				if (trees > 0)
@@ -1013,7 +1029,11 @@ namespace VerbalCommands
 				}
 				shell.notes.Add(string.Join(" and ", parts.ToArray()) + " stand inside; they do not stop the room.");
 			}
-			AddRoofNotes(map, shell, dig, ringBlocked);
+			// Settings gate (user, 2026-10-26): Build advice tips/notes. AddRoofNotes and AddAutoRoofRules only add notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				AddRoofNotes(map, shell, dig, ringBlocked);
+			}
 
 			// ---- the confirm sentence ----
 			string doorWhere = " on the " + sideName + " side at " + AgentPlace.Describe(map, shell.door);

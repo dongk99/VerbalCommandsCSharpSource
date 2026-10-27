@@ -17,5 +17,8 @@ flowchart TB
     near_vent --> near_write[plan.writes]
   end
   anywhere["PlanAnywhere (geyser only): unchanged, no cooler"]
-  class at_vent,near_vent new
+  anywhere --> gg{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  gg -- yes --> gn["note: 'Chosen: the free steam geyser nearest the colonists, of N in view. ...' (~193)"]
+  gg -- no --> gx["NEW 2026-10-26: note not added; the geyser choice is unchanged"]
+  class gg,gx new
   classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

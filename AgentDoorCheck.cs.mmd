@@ -1,5 +1,7 @@
 flowchart TB
   subgraph ns["NoteShell(plan, map, shell) ~56-74"]
+    g0{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn?"} -- no --> r0["NEW 2026-10-26: return: no DOOR note, no askConfirm"]
+    g0 -- yes --> a0
     a0{"shell has wall cells?"} -- no --> ret0["return"]
     a0 -- yes --> b["placed: wall blueprints<br/>+ the door if shell.placeDoor and door valid"]
     a{"REMOVED: shell.placeDoor and door valid?"}
@@ -9,7 +11,9 @@ flowchart TB
     c2 --> d["Note(plan, map, placed, open)"]
   end
   subgraph nt["Note(...)"]
-    d --> e["Sim: walls, doors, open cells"]
+    d --> gn{"NEW 2026-10-26: PlacementChecksOn?<br/>(also for the direct callers in AgentBuild, AgentBuildShapes, BuildTools)"}
+    gn -- no --> rn["NEW 2026-10-26: return: no DOOR / DOOR BLOCKED note, no askConfirm"]
+    gn -- yes --> e["Sim: walls, doors, open cells"]
     e --> bl["NEW BlockedDoors: each new wall of this order;<br/>look 1-3 cells N/E/S/W of it for a door<br/>(built, blueprint, frame, or this order's)"]
     bl --> ax{"that direction is the door's way through?<br/>(the door's two side cells across it bound:<br/>it sits in a wall line; door in no wall line: both ways)"}
     ax -- yes --> bn["note: DOOR BLOCKED ... (wording: user picks)<br/>+ askConfirm, confirmBy 'Door block check'"]
@@ -19,7 +23,7 @@ flowchart TB
     nd -- yes --> f["flood fill from each side of each door"]
     f --> g["enclosure across from an existing room?<br/>note + askConfirm (unchanged)"]
   end
-  class a0,b,bl,ax,bn,nd,ret2 new
+  class g0,r0,gn,rn new
   class a,ret removed
   classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
   classDef removed fill:#f7b6b6,stroke-dasharray:6 4

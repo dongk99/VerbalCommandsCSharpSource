@@ -5,9 +5,9 @@ flowchart TD
   hc["AgentHourlyCheck.Tick (every game hour)"] --> hl["HourlyLines(): HarnessLog.BeginHourly, then independent scans;<br/>none reads another's result, each only appends its lines to one list (in this order)"]
   hl --> ws["1 each home map, each work spot / bench:<br/>LightLine (less than 50% light, max 20 + 'And N more')<br/>work speed penalties (max 20 + 'And N more'), HarnessLog.Note"]
   hl --> per["2 each home map:<br/>AgentRoomTempScan (room temp, vents), StoveLine, BulkMealLine,<br/>AgentBenchScan.WorkLines, BlueprintLine, AgentWorkChanceScan (botched builds),<br/>CarryMedicineLine, AgentDeteriorationScan, AgentRotScan"]
-  hl --> dw["3 NEW DraftLines(map) (user 2026-10-25: any drafted pawn, every hourly scan, hostiles or not):<br/>drafted spawned colonists.<br/>INDOORS (room proper, not PsychologicallyOutdoors), one line per room:<br/>'Bob and Alice are inside bedroom. However pawns wont do anything while drafted, so if you are drafting to get them<br/>cooled down on hypothermia/hyperthermia, simply disallow/forbid them from using doors inside the room so they can<br/>interact with whatever is in the room but not go out.' (user's text; 'is' for one pawn, 'are' for several)<br/>OUTDOORS, same cell as at the last hourly scan, one line:<br/>'Bob and Alice are drafted and haven't moved from their last spot. Drafted pawns don't eat, sleep or work.'<br/>OUTDOORS, moved or newly drafted, one line:<br/>'Carol is drafted. Drafted pawns don't eat, sleep or work.'"]
-  dw --- spots["NEW lastDraftSpot: pawn -> cell at this scan (only drafted pawns kept); cleared in Reset()"]
-  hl --> fb["4 NEW ForbiddenLines(map) (user 2026-10-25):<br/>BUILDINGS: player buildings with CompForbiddable.Forbidden, every door + the others inside a room, one line:<br/>'Forbidden buildings: door12345 (door, bedroom to outdoors), bed4567 (bed, bedroom).<br/>Colonists won't use or pass them; unforbid ID. allows one again.' (max 20, then 'and N more')<br/>ITEMS: forbidden haulable items inside a room (proper, not outdoors), grouped per room, one line:<br/>'Forbidden items indoors: storeroom: steel x75, knife; kitchen: rice x20.<br/>unforbid items of THINGS in area AREA. allows them again.' (max 20 rooms, then 'and N more rooms')"]
+  hl --> dw["3 DraftLines(map) (user 2026-10-25: any drafted pawn, every hourly scan, hostiles or not):<br/>drafted spawned colonists.<br/>INDOORS (room proper, not PsychologicallyOutdoors), one line per room:<br/>'Bob and Alice are inside bedroom. However pawns wont do anything while drafted, so if you are drafting to get them<br/>cooled down on hypothermia/hyperthermia, simply disallow/forbid them from using doors inside the room so they can<br/>interact with whatever is in the room but not go out.' (user's text; 'is' for one pawn, 'are' for several)<br/>OUTDOORS, same cell as at the last hourly scan, one line:<br/>'Bob and Alice are drafted and haven't moved from their last spot. Drafted pawns don't eat, sleep or work.'<br/>OUTDOORS, moved or newly drafted, one line:<br/>'Carol is drafted. Drafted pawns don't eat, sleep or work.'"]
+  dw --- spots["lastDraftSpot: pawn -> cell at this scan (only drafted pawns kept); cleared in Reset()"]
+  hl --> fb["4 ForbiddenLines(map) (user 2026-10-25):<br/>BUILDINGS: player buildings with CompForbiddable.Forbidden, every door + the others inside a room, one line:<br/>'Forbidden buildings: door12345 (door, bedroom to outdoors), bed4567 (bed, bedroom).<br/>Colonists won't use or pass them; unforbid ID. allows one again.' (max 20, then 'and N more')<br/>ITEMS: forbidden haulable items inside a room (proper, not outdoors), grouped per room, one line:<br/>'Forbidden items indoors: storeroom: steel x75, knife; kitchen: rice x20.<br/>unforbid items of THINGS in area AREA. allows them again.' (max 20 rooms, then 'and N more rooms')"]
   hl --> hypo["5 HypothermiaLine (all home maps, one line)"]
   ws --> lst["the hourly list"]
   per --> lst
@@ -18,6 +18,17 @@ flowchart TD
   ms --> back["return lines -> AgentHourlyCheck (empty = no check)"]
   blk["Block(batch, title, when): title line + numbered lines, '[REMINDER] ' stripped"]
   back -.- blk
-  class dw,spots,fb new
+  six -.- g6["NEW 2026-10-26: Scan() gates, a call is skipped while its gate is off:<br/>chunks, heater, stonecutter: BaseRemindersOn / weapons: PawnRemindersOn /<br/>resources, micro leftovers: ResourceRemindersOn / [TIP] drafting tip: TipsOn"]
+  grow -.- gg["NEW 2026-10-26: AgentGrowScan.Lines only while FoodRemindersOn"]
+  tk["Tick(): 12-hour room list (AgentRoomScan.Text), daily door lines (AgentDoorPathScan.DailyLines)"] -.- gt["NEW 2026-10-26: both only while BaseRemindersOn<br/>(door lines still also need pathfindCost, unchanged)"]
+  ur["BreakTick / BleedTick / MerchantEntered: urgent lines"] -.- gu["NEW 2026-10-26: only while UrgentRemindersOn"]
+  tf["TakeFor(actions): hands out the queued batches on an orchestrator result"] -.- gd["NEW 2026-10-26: each queued line keeps its gate;<br/>a line whose gate is off by now is dropped at delivery"]
+  ws -.- gws["NEW 2026-10-26: gate BaseRemindersOn (work spot penalty and light lines)"]
+  per -.- gper["NEW 2026-10-26: gate per scan: RoomTemp, Stove, Blueprint: Base /<br/>BulkMeal, Deterioration, Rot: Food / Bench WorkLines, WorkChance, CarryMedicine: Pawn"]
+  dw -.- gdw["NEW 2026-10-26: gate PawnRemindersOn"]
+  fb -.- gfb["NEW 2026-10-26: gate BaseRemindersOn"]
+  hypo -.- ghy["NEW 2026-10-26: gate PawnRemindersOn"]
+  ms -.- gms["NEW 2026-10-26: MarkScanned still runs while PawnRemindersOn is off"]
+  class g6,gg,tk,gt,ur,gu,tf,gd,gws,gper,gdw,gfb,ghy,gms new
   classDef new fill:#b6f2b6
   classDef removed fill:#f7b6b6,stroke-dasharray:6 4

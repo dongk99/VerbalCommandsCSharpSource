@@ -1,0 +1,6 @@
+flowchart TB
+  rl["room layout order (bedroom, barracks, kitchen, dining room, research room)"] --> g{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  g -- yes --> n["layout notes added ~140-155 (texts ~237-345, ~681, ~715):<br/>room size / tight room, bedroom vs barracks, kitchen, dining seats, laboratory,<br/>beds per colonist, left out (no place), needs power"]
+  g -- no --> x["NEW 2026-10-26: layout notes not added; the layout and plan lines unchanged"]
+  class g,x new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

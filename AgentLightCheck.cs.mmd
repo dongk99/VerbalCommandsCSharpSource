@@ -1,0 +1,11 @@
+flowchart TB
+  n["Note(plan, map, placed) ~138: sun lamp, plant grower or light blocker in the plan"] --> g1{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn?"}
+  g1 -- no --> r1["NEW 2026-10-26: return: no LIGHT / PICTURE note, no askConfirm"]
+  g1 -- yes --> l["LIGHT notes ~211-304 (sun lamp, hydroponics basin, light blocker)"]
+  l --> c1["plan.askConfirm = true, confirmBy 'Sun lamp check' (~308-312)"]
+  c1 --> pic["PictureNote ~315-347: PICTURE note (hydroponics layout image)"]
+  nr["NoteRoof(plan, map, cells) ~351: roofing growing cells (called from AgentAreas ~252)"] --> g2{"NEW 2026-10-26: PlacementChecksOn?"}
+  g2 -- no --> r2["NEW 2026-10-26: return: no note, no askConfirm"]
+  g2 -- yes --> lr["LIGHT roof note ~385-387; askConfirm 'Sun lamp check' (~388-389)"]
+  class g1,r1,g2,r2 new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

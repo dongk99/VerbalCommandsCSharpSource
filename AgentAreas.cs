@@ -235,11 +235,13 @@ namespace VerbalCommands
 						tooFar++;
 					}
 				}
-				if (plants > 0)
+				// Settings gate (user, 2026-10-26): Build advice tips/notes.
+				if (VerbalCommandsMod.BuildAdviceOn && plants > 0)
 				{
 					plan.notes.Add(plants + (plants == 1 ? " of the cells has" : " of the cells have") + " a plant that can't live under a roof; the game warns about these (Add roof area). Colonists cut such a plant before they roof the cell.");
 				}
-				if (tooFar > 0)
+				// Settings gate (user, 2026-10-26): Build advice tips/notes.
+				if (VerbalCommandsMod.BuildAdviceOn && tooFar > 0)
 				{
 					plan.notes.Add(tooFar + (tooFar == 1 ? " of the cells is" : " of the cells are") + " too far from a wall or column to hold a roof (more than "
 						+ RoofCollapseUtility.RoofMaxSupportDistance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " cells), so no roof will be built there.");
@@ -262,7 +264,8 @@ namespace VerbalCommands
 			else if (kind == Kind.Allowed && op == Op.Remove && area != null)
 			{
 				int left = area.TrueCount - accepted.Count;
-				if (left <= 0)
+				// Settings gate (user, 2026-10-26): Build advice tips/notes.
+				if (VerbalCommandsMod.BuildAdviceOn && left <= 0)
 				{
 					plan.notes.Add("Area '" + area.Label + "' will have 0 cells; pawns kept to it can't go anywhere useful.");
 				}
@@ -325,7 +328,11 @@ namespace VerbalCommands
 			string line = "Make area '" + name + "' with " + Cells(accepted.Count) + " inside " + AgentPlace.DescribeRect(map, Bounds(accepted))
 				+ (left.Length > 0 ? " (" + left + " left out)" : "") + ".";
 			Plan plan = FormPlanner.NewPlan("area create");
-			plan.notes.Add("Use 'restrict PAWNS to area " + name + ".' to keep colonists in it.");
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn)
+			{
+				plan.notes.Add("Use 'restrict PAWNS to area " + name + ".' to keep colonists in it.");
+			}
 
 			Write write = new Write();
 			write.description = "make area '" + name + "' with " + Cells(accepted.Count);

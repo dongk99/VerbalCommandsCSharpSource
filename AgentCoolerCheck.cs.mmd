@@ -1,6 +1,8 @@
 flowchart TB
   in["NEW: AgentCoolerCheck.Note(plan, map, placed)<br/>overloads: (def, cell, rot) / (def, cells, rot) / List of Placed"]
-  in --> each{"NEW: each placed thing: def.thingClass is Building_Cooler?"}
+  in --> gate{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn? (every overload)"}
+  gate -- no --> gr["NEW 2026-10-26: return: no cooler note, no askConfirm"]
+  gate -- yes --> each{"NEW: each placed thing: def.thingClass is Building_Cooler?"}
   each -- no --> skip[NEW: skip]
   each -- yes --> sides["NEW: cold = cell + South.RotatedBy(rot)<br/>hot = cell + North.RotatedBy(rot)<br/>(Building_Cooler.cs:18-19)"]
   sides --> place{"NEW: PLACE of each side cell"}
@@ -15,5 +17,5 @@ flowchart TB
   note["NEW: plan note:<br/>Cooler at X, Z facing DIR: cold side blows into PLACE, hot side into PLACE. Confirm, or flip it?"]
   note --> confirm["NEW: plan.askConfirm = true; confirmBy = Cooler check<br/>(waits for apply even under raw apply)"]
   err["NEW: any exception: Log.Warning, plan goes on"]
-  class in,each,skip,sides,place,unseen,wall,outside,room,note,confirm,err new
+  class gate,gr new
   classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

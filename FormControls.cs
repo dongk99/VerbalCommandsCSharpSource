@@ -548,9 +548,13 @@ namespace VerbalCommands
 				if (rest.Count > 0)
 				{
 					beds.AddRange(rest);
-					plan.notes.Add(kind == "prisoner"
-						? "A prison cell is the whole room: the game makes every bed in it a prisoner bed, so " + rest.Count + " more " + (rest.Count == 1 ? "bed" : "beds") + " in the " + roomLabel + " change too."
-						: "A room stays a prison cell while any prisoner bed is in it, so " + rest.Count + " more prisoner " + (rest.Count == 1 ? "bed" : "beds") + " in the " + roomLabel + " change too.");
+					// Settings gate (user, 2026-10-26): Build advice tips/notes. The extra beds still change.
+					if (VerbalCommandsMod.BuildAdviceOn)
+					{
+						plan.notes.Add(kind == "prisoner"
+							? "A prison cell is the whole room: the game makes every bed in it a prisoner bed, so " + rest.Count + " more " + (rest.Count == 1 ? "bed" : "beds") + " in the " + roomLabel + " change too."
+							: "A room stays a prison cell while any prisoner bed is in it, so " + rest.Count + " more prisoner " + (rest.Count == 1 ? "bed" : "beds") + " in the " + roomLabel + " change too.");
+					}
 				}
 			}
 			List<Building_Bed> changing = new List<Building_Bed>();
@@ -558,12 +562,20 @@ namespace VerbalCommands
 			{
 				if (kind == "medical" && !bed.def.building.bed_canBeMedical)
 				{
-					plan.notes.Add("A " + bed.def.label + " can't be a medical bed, so it was left out.");
+					// Settings gate (user, 2026-10-26): Build advice tips/notes. The bed is still left out.
+					if (VerbalCommandsMod.BuildAdviceOn)
+					{
+						plan.notes.Add("A " + bed.def.label + " can't be a medical bed, so it was left out.");
+					}
 					continue;
 				}
 				if (kind == "prisoner" && !Building_Bed.RoomCanBePrisonCell(bed.GetRoom()))
 				{
-					plan.notes.Add("A bed in the " + roomLabel + " can't be for prisoners: the room can't be a prison cell (it needs walls and a door, and not be outdoors).");
+					// Settings gate (user, 2026-10-26): Build advice tips/notes. The bed is still left out.
+					if (VerbalCommandsMod.BuildAdviceOn)
+					{
+						plan.notes.Add("A bed in the " + roomLabel + " can't be for prisoners: the room can't be a prison cell (it needs walls and a door, and not be outdoors).");
+					}
 					continue;
 				}
 				changing.Add(bed);
@@ -633,7 +645,8 @@ namespace VerbalCommands
 				};
 				plan.writes.Add(refresh);
 			}
-			if (changing.Any((Building_Bed b) => b.OwnersForReading.Count > 0))
+			// Settings gate (user, 2026-10-26): Build advice tips/notes.
+			if (VerbalCommandsMod.BuildAdviceOn && changing.Any((Building_Bed b) => b.OwnersForReading.Count > 0))
 			{
 				plan.notes.Add("A changed bed loses the colonists it was assigned to.");
 			}

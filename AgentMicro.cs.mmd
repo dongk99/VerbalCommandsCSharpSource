@@ -13,3 +13,11 @@ flowchart TB
   pawns -- yes --> go["per pawn: quota by Mining skill, nearest reachable ore tile"]
   go --> start["Start ~894 -> StartMining: Designator_Mine on the tile + prioritized mine job"]
   start --> run["Update / Check every 3 s: AfterMined (veins via YieldsNear, other-resources question),<br/>hauling, Finish message"]
+  go -.- adv{"NEW 2026-10-26: VerbalCommandsMod.BuildAdviceOn?"}
+  adv -- yes --> advn["plan notes: skill block line (SkillBlock.Line, ~414), 'WHY PAWN was left out.' (~438)"]
+  adv -- no --> advx["NEW 2026-10-26: those two notes are not added"]
+  go -.- hos{"NEW 2026-10-26: VerbalCommandsMod.PlacementChecksOn?"}
+  hos -- yes --> hosn["hostiles in view: HostileNote (~89, added ~466) + askConfirm (~467)"]
+  hos -- no --> hosx["NEW 2026-10-26: no hostile note, no askConfirm"]
+  class adv,advx,hos,hosx new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
