@@ -1,0 +1,29 @@
+flowchart TB
+  ask["'show picture around SPOT.' / 'show picture of AREA.'"] --> mapchk{"map is the one on screen? (L70)"}
+  mapchk -- no --> f1["Fault: a picture shows only the map the camera is on"]
+  mapchk -- yes --> camchk{"Find.CameraDriver available? (L76-79)"}
+  camchk -- no --> f2["Fault: the game camera is not available right now"]
+  camchk -- yes --> winchk{"any window open? Find.WindowStack.Windows, not ImmediateWindow (tooltips / alerts drawn every frame, Verse\ImmediateWindow.cs:6), not the mod's own windows"}
+  winchk -- yes --> f3["Fault: 'a window is open (NAME); close it first (show windows. / close window.), then ask for the picture again.' Camera not moved, no picture"]
+  winchk -- no --> zoom["zoom so the whole rect fits: half-height = RootSize, half-width = RootSize * aspect (L121-122)"]
+  zoom --> move["move the real game camera: CameraDriver.SetRootPosAndSize (L18, L27)"]
+  move --> hideui["hide the game UI: Find.UIRoot.screenshotMode.Active = true, old value kept (ScreenshotModeHandler.cs:10-20; the game's own debug action does the same, DebugActionsMapManagement.cs:707)"]
+  hideui --> wait["WaitForEndOfFrame: frame rendered with the moved camera (L35)"]
+  wait --> grab["ScreenCapture.CaptureScreenshotAsTexture: the game's frame, map only (UI hidden), blueprints included"]
+  grab --> crop["crop to exactly the asked cells: corners of the rect -> Find.Camera.WorldToScreenPoint -> pixel box"]
+  crop --> shrink["shrink to MaxWidth only if the crop is wider"]
+  shrink --> which{"form?"}
+  which -- "show picture of AREA" --> labels["draw x over z on every tile: built-in 3 by 5 pixel-digit font, white with a black outline; digit scale halved (cellPx - 4) / 22, so a 34 px tile gets 1x digits (user: shrink by 50%)"]
+  which -- "show picture around SPOT" --> nolabels["no coordinates"]
+  labels --> png["write outbox\\picture.png; retried until it lands (L19-22)"]
+  nolabels --> png
+  png --> back["camera put back AND screenshotMode put back to its old value (L189-197)"]
+  ask --> answer["answer text names picture.png; AREA: 'every tile has its x and z drawn'; around: 'cell numbers are not drawn'; area wider than max zoom: middle part only (L153-154)"]
+  oldgrab["REMOVED: grab with UI included, whole screen, no crop"]
+  oldpng["REMOVED: always shrink the whole screen to MaxWidth"]
+  wait -.-> oldgrab
+  oldgrab -.-> oldpng
+  class winchk,f3,hideui,grab,crop,shrink,which,labels,nolabels,png,back,answer new
+  class oldgrab,oldpng removed
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
+  classDef removed fill:#f7b6b6,stroke:#b01a1a,stroke-width:3px,stroke-dasharray:6 4

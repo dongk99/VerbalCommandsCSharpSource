@@ -1,0 +1,16 @@
+flowchart TB
+  src["Room wall logic (user, 2026-10-16), run by AgentBuildShapes.PlanShell for every room an agent builds (L8)"] --> box["bounding box around an already placed room, 1 tile away from each wall, whenever a blueprint is placed (L9)"]
+  box --> overlap{"new room's wall overlaps that box?"}
+  overlap -- yes --> fit["Force-fit: move the blueprint so its wall lies on the placed room's wall; corners excepted, max 2 tiles (L10-11)"]
+  fit --> door["door blueprint created between the two corners (L14)"]
+  overlap -- no --> plain["room planned as asked"]
+  src --> block["new room blocked while 1 room is unfinished: walls, doors, anything inside being built (L12-13)"]
+  src --> wallis["a wall here: building.isWall, a door, or canPlaceOverWall (doors, vent, cooler), built or player blueprint/frame; natural rock also closes a room (L15-18)"]
+  wallis --> shared["class SharedWall: the shared wall cells, its two corners included (L20-23)"]
+  callsite["AgentBuildShapes.cs:669-673: RefuseWhileUnfinished always; Fit only when not dig room. No settings check"] --> block
+  callsite --> box
+  fit --> gate{"VerbalCommandsMod.BuildAdviceOn? (AgentBuildShapes.cs:969, settings gate 2026-10-26)"}
+  gate -- yes --> msg["AgentBuildShapes.cs:980-981 note: 'The room is moved 1 cell ... no double wall.'"]
+  gate -- no --> nomsg["note not added; room is still moved (the move is not gated)"]
+  class callsite,gate,nomsg,msg new
+  classDef new fill:#b6f2b6
